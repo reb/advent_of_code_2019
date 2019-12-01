@@ -73,14 +73,24 @@ const INPUT: &str = include_str!("../input/day_01.txt");
 pub fn run() {
     let module_masses = get_input();
 
-    let mut total_fuel = 0;
+    let mut total_fuel_modules = 0;
+    let mut total_all_fuel = 0;
+
     for module_mass in module_masses.iter() {
-        let fuel_needed = (module_mass / 3) - 2;
-        total_fuel += fuel_needed;
+        let mut fuel_needed = fuel_requirement(module_mass);
+        total_fuel_modules += fuel_needed;
+        while fuel_needed > 0 {
+            total_all_fuel += fuel_needed;
+            fuel_needed = fuel_requirement(&fuel_needed);
+        }
     }
-    println!("The total fuel needed for all the modules is: {}", total_fuel);
+    println!("The total fuel needed for all the modules is: {}", total_fuel_modules);
+    println!("The total fuel needed for all the modules and fuel is: {}", total_all_fuel);
 }
 
+fn fuel_requirement(mass: &i32) -> i32 {
+    (mass / 3) - 2
+}
 
 fn get_input() -> Vec<i32> {
     INPUT.lines()
