@@ -36,6 +36,20 @@
 const INPUT: &str = include_str!("../input/day_01.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let module_masses = get_input();
+
+    let mut total_fuel = 0;
+    for module_mass in module_masses.iter() {
+        let fuel_needed = (module_mass / 3) - 2;
+        total_fuel += fuel_needed;
+    }
+    println!("The total fuel needed for all the modules is: {}", total_fuel);
+}
+
+
+fn get_input() -> Vec<i32> {
+    INPUT.lines()
+        .map(|line| line.parse())
+        .filter_map(Result::ok)
+        .collect()
 }
