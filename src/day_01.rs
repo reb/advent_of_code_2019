@@ -66,7 +66,6 @@
 /// spacecraft when also taking into account the mass of the added fuel?
 /// (Calculate the fuel requirements for each module separately, then add them
 /// all up at the end.)
-///
 
 const INPUT: &str = include_str!("../input/day_01.txt");
 
