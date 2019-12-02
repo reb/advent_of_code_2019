@@ -1,3 +1,5 @@
+#![feature(slice_patterns)]
+
 use std::env;
 use std::collections::HashMap;
 
