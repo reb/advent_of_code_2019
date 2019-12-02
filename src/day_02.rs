@@ -119,14 +119,36 @@
 const INPUT: &str = include_str!("../input/day_02.txt");
 
 pub fn run() {
-    let mut program = get_input();
+    let base_program = get_input();
 
     // reproduce the "1202 program alarm" by setting position 1 & 2
-    program[1] = 12;
-    program[2] = 2;
+    {
+        let mut program = base_program.clone();
+        program[1] = 12;
+        program[2] = 2;
 
-    program = execute_intcode(program);
-    println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", program[0]);
+        program = execute_intcode(program);
+        println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", program[0]);
+    }
+
+    // try to find the output 19690720
+    {
+        'finder: for noun in 0..=99 {
+            for verb in 0..=99 {
+                let mut program = base_program.clone();
+                program[1] = noun;
+                program[2] = verb;
+
+                program = execute_intcode(program);
+                if program[0] == 19690720 {
+                    let answer = 100 * noun + verb;
+                    println!("The input noun and verb to produce the output 19690720 is: {}", answer);
+                    break 'finder;
+                }
+            }
+        }
+    }
+
 
 }
 
