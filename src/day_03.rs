@@ -57,9 +57,112 @@
 /// What is the Manhattan distance from the central port to the closest
 /// intersection?
 
+use regex::Regex;
+use std::collections::HashMap;
+use std::collections::HashSet;
+
 const INPUT: &str = include_str!("../input/day_03.txt");
 
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+struct Move {
+    direction: Direction,
+    steps: u32,
+}
+
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let wires = get_input();
+
+    println!("{:?}", wires);
+}
+
+fn get_input() -> Vec<Vec<Move>> {
+    INPUT.lines()
+        .map(|line| {
+            line.split(',')
+                .map(|item| convert_to_move(item))
+                .filter_map(|m| m)
+                .collect()
+        })
+        .collect()
+}
+
+fn convert_to_move(item: &str) -> Option<Move> {
+    lazy_static! {
+        static ref RE: Regex = Regex::new(r"([URDL])([0-9]+)").unwrap();
+    }
+    let captures = RE.captures(item);
+    match captures {
+        Some(groups) => {
+            match (groups.get(1), groups.get(2)) {
+                (Some(direction), Some(steps)) => {
+                    return Some(Move {
+                        direction: match direction.as_str() {
+                            "U" => Direction::Up,
+                            "R" => Direction::Right,
+                            "D" => Direction::Down,
+                            "L" => Direction::Left,
+                            _ => return None,
+                        },
+                        steps: match steps.as_str().parse() {
+                            Ok(number) => number,
+                            Err(_) => return None,
+                        }
+                    });
+                },
+                _ => None,
+            }
+        }
+        _ => None,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_convert_to_move_up() {
+        let input = "U7";
+        let output = Some(Move { direction: Direction::Up, steps: 7 });
+
+        assert_eq!(convert_to_move(input), output);
+    }
+
+    #[test]
+    fn test_convert_to_move_right() {
+        let input = "R6";
+        let output = Some(Move { direction: Direction::Right, steps: 6 });
+
+        assert_eq!(convert_to_move(input), output);
+    }
+
+    #[test]
+    fn test_convert_to_move_down() {
+        let input = "D4";
+        let output = Some(Move { direction: Direction::Down, steps: 4 });
+
+        assert_eq!(convert_to_move(input), output);
+    }
+
+    #[test]
+    fn test_convert_to_move_left() {
+        let input = "L14";
+        let output = Some(Move { direction: Direction::Left, steps: 14 });
+
+        assert_eq!(convert_to_move(input), output);
+    }
+
+    #[test]
+    fn test_convert_to_move_invalid() {
+        let input = "34";
+        assert_eq!(convert_to_move(input), None);
+    }
 }
