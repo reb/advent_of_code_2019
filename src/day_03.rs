@@ -104,6 +104,7 @@
 use regex::Regex;
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::hash::{Hash, Hasher};
 
 const INPUT: &str = include_str!("../input/day_03.txt");
 
@@ -121,8 +122,26 @@ struct Move {
     steps: u32,
 }
 
+#[derive(Debug, Eq, PartialOrd, Ord, Clone)]
+struct Wire {
+    number: usize,
+    distance: u32
+}
+
+impl PartialEq for Wire {
+    fn eq(&self, other: &Self) -> bool {
+        self.number == other.number
+    }
+}
+
+impl Hash for Wire {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.number.hash(hasher);
+    }
+}
+
 type Point = (i32, i32);
-type Grid = HashMap<Point, HashSet<usize>>;
+type Grid = HashMap<Point, HashSet<Wire>>;
 
 pub fn run() {
     let wires = get_input();
@@ -143,11 +162,13 @@ pub fn run() {
 
 fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid {
     let (mut x, mut y) = (0, 0);
+    let mut distance = 0;
 
     // execute every move
     for m in moves.iter() {
         // execute every step in a move
         for _ in 0..m.steps {
+            distance += 1;
             match &m.direction {
                 Direction::Up => x += 1,
                 Direction::Right => y += 1,
@@ -155,7 +176,8 @@ fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid 
                 Direction::Left => y -= 1,
             };
             let wires_present = wire_grid.entry((x, y)).or_insert(HashSet::new());
-            (*wires_present).insert(wire_number);
+            let wire = Wire {number: wire_number, distance: distance};
+            (*wires_present).insert(wire);
         }
     }
     wire_grid
@@ -256,7 +278,7 @@ mod tests {
         let wire_map = HashMap::new();
 
         let mut wire_present = HashSet::new();
-        wire_present.insert(0);
+        wire_present.insert(Wire {number: 0, distance: 0});
         let mut output = HashMap::new();
         output.insert((0, 1), wire_present.clone());
         output.insert((0, 2), wire_present.clone());
@@ -277,13 +299,13 @@ mod tests {
             Move { direction: Direction::Up, steps: 1 },
         ];
         let mut wire_present = HashSet::new();
-        wire_present.insert(0);
+        wire_present.insert(Wire {number: 0, distance: 0});
         let mut wire_map = HashMap::new();
         wire_map.insert((1, 0), wire_present);
 
         let mut both_wires = HashSet::new();
-        both_wires.insert(0);
-        both_wires.insert(1);
+        both_wires.insert(Wire {number: 0, distance: 0});
+        both_wires.insert(Wire {number: 1, distance: 0});
         let mut output = HashMap::new();
         output.insert((1, 0), both_wires);
 
