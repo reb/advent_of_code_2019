@@ -99,9 +99,10 @@ pub fn run() {
 
 fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid {
     let (mut x, mut y) = (0, 0);
-    let mut new_set = HashSet::new();
-    new_set.insert(wire_number);
+
+    // execute every move
     for m in moves.iter() {
+        // execute every step in a move
         for _ in 0..m.steps {
             match &m.direction {
                 Direction::Up => x += 1,
