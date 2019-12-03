@@ -311,4 +311,25 @@ mod tests {
 
         assert_eq!(lay_wire(wire_number, &moves, wire_map), output);
     }
+
+    #[test]
+    fn test_lay_wire_no_override_when_overlaps() {
+        let wire_number = 0;
+        let moves = vec![
+            Move { direction: Direction::Up, steps: 2 },
+            Move { direction: Direction::Down, steps: 1 },
+        ];
+        let wire_map = HashMap::new();
+
+        let output = lay_wire(wire_number, &moves, wire_map);
+        let distance = output
+            .get(&(1, 0)) // get first position
+            .unwrap()
+            .iter() // iterate over all wires
+            .next() // get the first one
+            .unwrap()
+            .distance;
+
+        assert_eq!(distance, 1);
+    }
 }
