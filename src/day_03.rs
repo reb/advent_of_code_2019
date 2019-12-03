@@ -77,10 +77,37 @@ struct Move {
     steps: u32,
 }
 
+type Point = (i32, i32);
+type Grid = HashMap<Point, HashSet<usize>>;
+
 pub fn run() {
     let wires = get_input();
 
+    let mut wire_grid = HashMap::new();
+    for (wire_number, moves) in wires.iter().enumerate() {
+        wire_grid = lay_wire(wire_number, moves, wire_grid)
+    }
+
     println!("{:?}", wires);
+}
+
+fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid {
+    let (mut x, mut y) = (0, 0);
+    let mut new_set = HashSet::new();
+    new_set.insert(wire_number);
+    for m in moves.iter() {
+        for _ in 0..m.steps {
+            match &m.direction {
+                Direction::Up => x += 1,
+                Direction::Right => y += 1,
+                Direction::Down => x -= 1,
+                Direction::Left => y -= 1,
+            };
+            let wires_present = wire_grid.entry((x, y)).or_insert(HashSet::new());
+            (*wires_present).insert(wire_number);
+        }
+    }
+    wire_grid
 }
 
 fn get_input() -> Vec<Vec<Move>> {
@@ -164,5 +191,51 @@ mod tests {
     fn test_convert_to_move_invalid() {
         let input = "34";
         assert_eq!(convert_to_move(input), None);
+    }
+
+    #[test]
+    fn test_lay_wire() {
+        let wire_number = 0;
+        let moves = vec![
+            Move { direction: Direction::Right, steps: 2 },
+            Move { direction: Direction::Up, steps: 1 },
+            Move { direction: Direction::Left, steps: 3 },
+            Move { direction: Direction::Down, steps: 2 },
+        ];
+        let wire_map = HashMap::new();
+
+        let mut wire_present = HashSet::new();
+        wire_present.insert(0);
+        let mut output = HashMap::new();
+        output.insert((0, 1), wire_present.clone());
+        output.insert((0, 2), wire_present.clone());
+        output.insert((1, 2), wire_present.clone());
+        output.insert((1, 1), wire_present.clone());
+        output.insert((1, 0), wire_present.clone());
+        output.insert((1, -1), wire_present.clone());
+        output.insert((0, -1), wire_present.clone());
+        output.insert((-1, -1), wire_present.clone());
+
+        assert_eq!(lay_wire(wire_number, &moves, wire_map), output);
+    }
+
+    #[test]
+    fn test_lay_wire_on_top_of_other() {
+        let wire_number = 1;
+        let moves = vec![
+            Move { direction: Direction::Up, steps: 1 },
+        ];
+        let mut wire_present = HashSet::new();
+        wire_present.insert(0);
+        let mut wire_map = HashMap::new();
+        wire_map.insert((1, 0), wire_present);
+
+        let mut both_wires = HashSet::new();
+        both_wires.insert(0);
+        both_wires.insert(1);
+        let mut output = HashMap::new();
+        output.insert((1, 0), both_wires);
+
+        assert_eq!(lay_wire(wire_number, &moves, wire_map), output);
     }
 }
