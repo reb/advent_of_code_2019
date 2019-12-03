@@ -88,7 +88,13 @@ pub fn run() {
         wire_grid = lay_wire(wire_number, moves, wire_grid)
     }
 
-    println!("{:?}", wires);
+    let closest = wire_grid.iter()
+        .filter(|(_, wires_present)| wires_present.len() == 2)
+        .map(|((x, y), _)| x.abs() + y.abs()) // convert to Manhattan distances
+        .min()
+        .unwrap();
+
+    println!("The Manhattan distance to closest intersection is: {}", closest);
 }
 
 fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid {
