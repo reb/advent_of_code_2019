@@ -62,12 +62,23 @@ pub fn run() {
     let end = 746325;
 
     let mut valid_passwords = 0;
+    let mut valid_stricter_passwords = 0;
+
     for number in start..=end {
         if is_valid(number) {
             valid_passwords += 1;
         }
+        if is_valid_with_stricter_criteria(number) {
+            valid_stricter_passwords += 1;
+        }
     }
-    println!("Amount of passwords meeting the criteria in the given range: {}", valid_passwords);
+
+    println!(
+        "Amount of passwords meeting the criteria in the given range: {}",
+        valid_passwords);
+    println!(
+        "Amount of passwords meeting the stricter criteria in the given range: {}",
+        valid_stricter_passwords);
 }
 
 fn is_valid(number: u32) -> bool {
@@ -78,6 +89,7 @@ fn is_valid(number: u32) -> bool {
             if next_digit < &digit {
                 return false;
             }
+
             if next_digit == &digit {
                 two_same_adjacent = true;
             }
@@ -86,6 +98,34 @@ fn is_valid(number: u32) -> bool {
 
     // all digits increase in value, validity depends on two same adjacent digits
     two_same_adjacent
+}
+
+fn is_valid_with_stricter_criteria(number: u32) -> bool {
+    let mut iter = Digits::new(number).peekable();
+    let mut two_same_adjacent = false;
+    let mut amount_of_equal_digits = None;
+    while let Some(digit) = iter.next() {
+        if let Some(next_digit) = iter.peek() {
+            if next_digit < &digit {
+                return false;
+            }
+
+            if next_digit == &digit {
+                amount_of_equal_digits = match amount_of_equal_digits {
+                    Some(amount) => Some(amount+1),
+                    None => Some(2),
+                }
+            } else if let Some(amount) = amount_of_equal_digits {
+                if amount == 2 {
+                    two_same_adjacent = true;
+                }
+                amount_of_equal_digits = None;
+            }
+        }
+    }
+
+    // all digits increase in value, validity depends on two same adjacent digits
+    two_same_adjacent || amount_of_equal_digits == Some(2)
 }
 
 #[cfg(test)]
@@ -108,5 +148,29 @@ mod tests {
     fn test_is_valid_3() {
         let input = 123789;
         assert!(!is_valid(input));
+    }
+
+    #[test]
+    fn test_is_valid_with_stricter_criteria_1() {
+        let input = 112233;
+        assert!(is_valid_with_stricter_criteria(input));
+    }
+
+    #[test]
+    fn test_is_valid_with_stricter_criteria_2() {
+        let input = 123444;
+        assert!(!is_valid_with_stricter_criteria(input));
+    }
+
+    #[test]
+    fn test_is_valid_with_stricter_criteria_3() {
+        let input = 111122;
+        assert!(is_valid_with_stricter_criteria(input));
+    }
+
+    #[test]
+    fn test_is_valid_with_stricter_criteria_4() {
+        let input = 266880;
+        assert!(!is_valid_with_stricter_criteria(input));
     }
 }
