@@ -146,8 +146,8 @@ pub fn run() {
         program[1] = 12;
         program[2] = 2;
 
-        program = intcode::execute(program);
-        println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", program[0]);
+        let (ran_program, _) = intcode::execute(program, Vec::new());
+        println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", ran_program[0]);
     }
 
     // try to find the output 19690720
@@ -158,8 +158,8 @@ pub fn run() {
                 program[1] = noun;
                 program[2] = verb;
 
-                program = intcode::execute(program);
-                if program[0] == 19690720 {
+                let (ran_program, _) = intcode::execute(program, Vec::new());
+                if ran_program[0] == 19690720 {
                     let answer = 100 * noun + verb;
                     println!("The input noun and verb to produce the output 19690720 is: {}", answer);
                     break 'finder;
