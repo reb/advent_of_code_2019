@@ -1,13 +1,15 @@
-pub fn execute(mut program: Vec<usize>) -> Vec<usize> {
+pub fn execute(mut program: Vec<i32>) -> Vec<i32> {
     let mut position = 0;
     loop {
         match &program[position..] {
             &[99, ..] => break,
             &[1, first, second, target, ..] => {
-                program[target] = program[first] + program[second];
+                program[target as usize] =
+                    program[first as usize] + program[second as usize];
             },
             &[2, first, second, target, ..] => {
-                program[target] = program[first] * program[second];
+                program[target as usize] =
+                    program[first as usize] * program[second as usize];
             },
             _ => panic!("Unknown instruction"),
 
@@ -17,7 +19,7 @@ pub fn execute(mut program: Vec<usize>) -> Vec<usize> {
     program
 }
 
-pub fn load(input: &str) -> Vec<usize> {
+pub fn load(input: &str) -> Vec<i32> {
     input.trim()
         .split(',')
         .map(|number| number.parse())
