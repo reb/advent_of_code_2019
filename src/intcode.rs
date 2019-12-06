@@ -8,28 +8,32 @@ pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i3
     let mut position = 0;
     let mut outputs: Vec<i32> = Vec::new();
     loop {
-        match &program[position..] {
-            &[99, ..] => break,
-            &[1, first, second, target, ..] => {
-                program[target as usize] =
-                    program[first as usize] + program[second as usize];
-                position += 4;
-            },
-            &[2, first, second, target, ..] => {
-                program[target as usize] =
-                    program[first as usize] * program[second as usize];
-                position += 4;
-            },
-            &[3, target, ..] => {
-                program[target as usize] = inputs.remove(0);
-                position += 2;
-            },
-            &[4, target, ..] => {
-                outputs.push(program[target as usize]);
-                position += 2;
-            },
-            _ => panic!("Unknown instruction"),
+        let (modes, opcode) = extract_modes(program[position]);
+        let parameters = &program[position+1..];
 
+        match (opcode, parameters) {
+            (99, _) => break,
+            (1, &[first, second, write, ..]) => {
+                program[write as usize] =
+                    find_value(first, &(modes[0]), &program) +
+                    find_value(second, &(modes[1]), &program);
+                position += 4;
+            },
+            (2, &[first, second, write, ..]) => {
+                program[write as usize] =
+                    find_value(first, &(modes[0]), &program) *
+                    find_value(second, &(modes[1]), &program);
+                position += 4;
+            },
+            (3, &[write, ..]) => {
+                program[write as usize] = inputs.remove(0);
+                position += 2;
+            },
+            (4, &[read, ..]) => {
+                outputs.push(find_value(read, &modes[0], &program));
+                position += 2;
+            },
+            invalid => panic!("Unknown instruction: {:?}", invalid),
         }
     }
     (program, outputs)
@@ -50,6 +54,13 @@ fn extract_modes(mut instruction: i32) -> (Vec<Mode>, i32) {
         instruction /= 10;
     }
     (modes, opcode)
+}
+
+fn find_value(number: i32, mode: &Mode, program: &Vec<i32>) -> i32 {
+    match mode {
+        Mode::Position => program[number as usize],
+        Mode::Immediate => number,
+    }
 }
 
 pub fn load(input: &str) -> Vec<i32> {
@@ -117,10 +128,38 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_modes() {
+        let input = vec![1002,4,3,4,33];
+        let output = vec![1002,4,3,4,99];
+
+        assert_eq!(execute(input, Vec::new()), (output, Vec::new()));
+    }
+
+    #[test]
     fn test_extract_modes() {
         let input = 1002;
         let output = (vec![Mode::Position, Mode::Immediate, Mode::Position], 2);
 
         assert_eq!(extract_modes(input), output);
+    }
+
+    #[test]
+    fn test_find_value_position_mode() {
+        let program = &vec![1002,4,3,4,33];
+        let mode = &Mode::Position;
+        let number = 4;
+
+        let output = 33;
+        assert_eq!(find_value(number, mode, program), output);
+    }
+
+    #[test]
+    fn test_find_value_immediate_mode() {
+        let program = &vec![1002,4,3,4,33];
+        let mode = &Mode::Immediate;
+        let number = 3;
+
+        let output = 3;
+        assert_eq!(find_value(number, mode, program), output);
     }
 }
