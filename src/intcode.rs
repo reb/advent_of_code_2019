@@ -7,15 +7,24 @@ pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i3
             &[1, first, second, target, ..] => {
                 program[target as usize] =
                     program[first as usize] + program[second as usize];
+                position += 4;
             },
             &[2, first, second, target, ..] => {
                 program[target as usize] =
                     program[first as usize] * program[second as usize];
+                position += 4;
+            },
+            &[3, target, ..] => {
+                program[target as usize] = inputs.remove(0);
+                position += 2;
+            },
+            &[4, target, ..] => {
+                outputs.push(program[target as usize]);
+                position += 2;
             },
             _ => panic!("Unknown instruction"),
 
         }
-        position += 4;
     }
     (program, outputs)
 }
@@ -70,5 +79,17 @@ mod tests {
         let output = vec![3500,9,10,70,2,3,11,0,99,30,40,50];
 
         assert_eq!(execute(input, Vec::new()), (output, Vec::new()));
+    }
+
+    #[test]
+    fn test_execute_opcode_3_and_4() {
+        let input_program = vec![3,0,4,0,99];
+        let inputs = vec![1];
+        let output_program = vec![1,0,4,0,99];
+        let outputs = vec![1];
+        assert_eq!(
+            execute(input_program, inputs),
+            (output_program, outputs)
+        );
     }
 }
