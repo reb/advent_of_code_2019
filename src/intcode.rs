@@ -1,3 +1,9 @@
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+enum Mode {
+    Position,
+    Immediate,
+}
+
 pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i32>) {
     let mut position = 0;
     let mut outputs: Vec<i32> = Vec::new();
@@ -27,6 +33,23 @@ pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i3
         }
     }
     (program, outputs)
+}
+
+fn extract_modes(mut instruction: i32) -> (Vec<Mode>, i32) {
+    let opcode = instruction % 100;
+    instruction /= 100;
+
+    let mut modes = Vec::new();
+    for _ in 0..3 {
+        let mode = match instruction % 10 {
+            0 => Mode::Position,
+            1 => Mode::Immediate,
+            _ => panic!("Unknown mode given"),
+        };
+        modes.push(mode);
+        instruction /= 10;
+    }
+    (modes, opcode)
 }
 
 pub fn load(input: &str) -> Vec<i32> {
@@ -91,5 +114,13 @@ mod tests {
             execute(input_program, inputs),
             (output_program, outputs)
         );
+    }
+
+    #[test]
+    fn test_extract_modes() {
+        let input = 1002;
+        let output = (vec![Mode::Position, Mode::Immediate, Mode::Position], 2);
+
+        assert_eq!(extract_modes(input), output);
     }
 }
