@@ -6,6 +6,8 @@ extern crate regex;
 use std::env;
 use std::collections::HashMap;
 
+mod intcode;
+
 fn main() {
     let mut args = env::args();
     args.next();
