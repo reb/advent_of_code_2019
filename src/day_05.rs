@@ -96,10 +96,18 @@
 /// After providing 1 to the only input instruction and passing all the tests,
 /// what diagnostic code does the program produce?
 
+use intcode;
 
 const INPUT: &str = include_str!("../input/day_05.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let program = intcode::load(INPUT);
+
+    let inputs = vec![1];
+    let (_, outputs) = intcode::execute(program, inputs);
+
+    let diagnostic_code = outputs.last().unwrap();
+
+    println!(
+        "The diagnostic code produced with input 1 is: {}", diagnostic_code);
 }
