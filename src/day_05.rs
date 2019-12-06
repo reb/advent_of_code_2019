@@ -97,7 +97,7 @@
 /// what diagnostic code does the program produce?
 
 
-const INPUT: &str = include_str!("../input/day_04.txt");
+const INPUT: &str = include_str!("../input/day_05.txt");
 
 pub fn run() {
     println!("Not implemented yet");
