@@ -31,6 +31,40 @@ pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i3
                 outputs.push(find_value(read, &modes[0], &program));
                 position += 2;
             }
+            (5, &[condition, jump, ..]) => {
+                if find_value(condition, &modes[1], &program) != 0 {
+                    position = find_value(jump, &modes[1], &program) as usize;
+                } else {
+                    position += 3
+                }
+            }
+            (6, &[condition, jump, ..]) => {
+                if find_value(condition, &modes[1], &program) == 0 {
+                    position = find_value(jump, &modes[1], &program) as usize;
+                } else {
+                    position += 3
+                }
+            }
+            (7, &[first, second, write, ..]) => {
+                let value_to_write = match find_value(first, &modes[0], &program)
+                    < find_value(second, &modes[1], &program)
+                {
+                    true => 1,
+                    false => 0,
+                };
+                program[write as usize] = value_to_write;
+                position += 4;
+            }
+            (8, &[first, second, write, ..]) => {
+                let value_to_write = match find_value(first, &modes[0], &program)
+                    == find_value(second, &modes[1], &program)
+                {
+                    true => 1,
+                    false => 0,
+                };
+                program[write as usize] = value_to_write;
+                position += 4;
+            }
             invalid => panic!("Unknown instruction: {:?}", invalid),
         }
     }
