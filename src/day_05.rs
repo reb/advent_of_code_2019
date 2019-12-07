@@ -165,7 +165,6 @@
 /// number, the diagnostic code.
 ///
 /// What is the diagnostic code for system ID 5?
-
 use intcode;
 
 const INPUT: &str = include_str!("../input/day_05.txt");
@@ -179,5 +178,7 @@ pub fn run() {
     let diagnostic_code = outputs.last().unwrap();
 
     println!(
-        "The diagnostic code produced with input 1 is: {}", diagnostic_code);
+        "The diagnostic code produced with input 1 is: {}",
+        diagnostic_code
+    );
 }
