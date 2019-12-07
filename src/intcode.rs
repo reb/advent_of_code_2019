@@ -278,6 +278,48 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_larger_example_999() {
+        // take an input, output 999 if the input was below 8
+        let input_program = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let inputs = vec![7];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![999]);
+    }
+
+    #[test]
+    fn test_execute_larger_example_1000() {
+        // take an input, output 1000 if the input was equal to 8
+        let input_program = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let inputs = vec![8];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1000]);
+    }
+
+    #[test]
+    fn test_execute_larger_example_1001() {
+        // take an input, output 1001 if the input was greater than 8
+        let input_program = vec![
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
+            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
+            20, 1105, 1, 46, 98, 99,
+        ];
+        let inputs = vec![9];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1001]);
+    }
+
+    #[test]
     fn test_execute_modes() {
         let input = vec![1002, 4, 3, 4, 33];
         let output = vec![1002, 4, 3, 4, 99];
