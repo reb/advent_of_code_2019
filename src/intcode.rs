@@ -124,6 +124,126 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_opcode_8_position_mode_true() {
+        // consider whether the input is equal to 8, output 1 if it is
+        let input_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let inputs = vec![8];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1]);
+    }
+
+    #[test]
+    fn test_execute_opcode_8_position_mode_false() {
+        // consider whether the input is equal to 8, output 0 if it is not
+        let input_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let inputs = vec![7];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![0]);
+    }
+
+    #[test]
+    fn test_execute_opcode_7_position_mode_true() {
+        // consider whether the input is less than to 8, output 1 if it is
+        let input_program = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let inputs = vec![7];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1]);
+    }
+
+    #[test]
+    fn test_execute_opcode_7_position_mode_false() {
+        // consider whether the input is less than to 8, output 0 if it is not
+        let input_program = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let inputs = vec![8];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![0]);
+    }
+
+    #[test]
+    fn test_execute_opcode_8_immediate_mode_true() {
+        // consider whether the input is equal to 8, output 1 if it is
+        let input_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let inputs = vec![8];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1]);
+    }
+
+    #[test]
+    fn test_execute_opcode_8_immediate_mode_false() {
+        // consider whether the input is equal to 8, output 0 if it is not
+        let input_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let inputs = vec![7];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![0]);
+    }
+
+    #[test]
+    fn test_execute_opcode_7_immediate_mode_true() {
+        // consider whether the input is less than to 8, output 1 if it is
+        let input_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let inputs = vec![7];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1]);
+    }
+
+    #[test]
+    fn test_execute_opcode_7_immediate_mode_false() {
+        // consider whether the input is less than to 8, output 0 if it is not
+        let input_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let inputs = vec![8];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![0]);
+    }
+
+    #[test]
+    fn test_execute_opcode_5_and_6_position_mode_0() {
+        // take an input, output 0 if the input was 0
+        let input_program = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let inputs = vec![0];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![0]);
+    }
+
+    #[test]
+    fn test_execute_opcode_5_and_6_position_mode_1() {
+        // take an input, output 1 if the input was not 0
+        let input_program = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let inputs = vec![2];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1]);
+    }
+
+    #[test]
+    fn test_execute_opcode_5_and_6_immediate_mode_0() {
+        // take an input, output 0 if the input was 0
+        let input_program = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let inputs = vec![0];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![0]);
+    }
+
+    #[test]
+    fn test_execute_opcode_5_and_6_immediate_mode_1() {
+        // take an input, output 1 if the input was not 0
+        let input_program = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let inputs = vec![2];
+
+        let (_, outputs) = execute(input_program, inputs);
+        assert_eq!(outputs, vec![1]);
+    }
+
+    #[test]
     fn test_execute_modes() {
         let input = vec![1002, 4, 3, 4, 33];
         let output = vec![1002, 4, 3, 4, 99];
