@@ -32,14 +32,14 @@ pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i3
                 position += 2;
             }
             (5, &[condition, jump, ..]) => {
-                if find_value(condition, &modes[1], &program) != 0 {
+                if find_value(condition, &modes[0], &program) != 0 {
                     position = find_value(jump, &modes[1], &program) as usize;
                 } else {
                     position += 3
                 }
             }
             (6, &[condition, jump, ..]) => {
-                if find_value(condition, &modes[1], &program) == 0 {
+                if find_value(condition, &modes[0], &program) == 0 {
                     position = find_value(jump, &modes[1], &program) as usize;
                 } else {
                     position += 3
