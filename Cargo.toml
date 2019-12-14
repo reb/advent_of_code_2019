@@ -6,3 +6,4 @@ authors = ["reb <reboumans@gmail.com>"]
 [dependencies]
 regex = "*"
 lazy_static = "*"
+petgraph = "*"

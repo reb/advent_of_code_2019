@@ -67,10 +67,23 @@
 /// The total number of direct and indirect orbits in this example is 42.
 ///
 /// What is the total number of direct and indirect orbits in your map data?
+use petgraph::graphmap::DiGraphMap;
 
 const INPUT: &str = include_str!("../input/day_06.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let orbits = get_input();
+    println!("{:?}", orbits);
+}
+
+fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
+    let connecting_pairs: Vec<(&str, &str)> = INPUT
+        .lines()
+        .map(|line| line.trim().split(')').collect())
+        .map(|elements: Vec<&str>| match &elements[..2] {
+            &[from, to] => (from, to),
+            _ => panic!("There were no 2 elements on a line in the input"),
+        })
+        .collect();
+    DiGraphMap::<_, ()>::from_edges(connecting_pairs)
 }
