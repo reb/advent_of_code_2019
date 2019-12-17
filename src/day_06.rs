@@ -126,6 +126,8 @@
 use petgraph::algo::dijkstra;
 use petgraph::graphmap::DiGraphMap;
 use petgraph::visit::{Dfs, Reversed};
+type Graph<'a> = DiGraphMap<&'a str, ()>;
+
 const INPUT: &str = include_str!("../input/day_06.txt");
 
 pub fn run() {
@@ -138,7 +140,7 @@ pub fn run() {
     );
 }
 
-fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
+fn get_input<'a>() -> Graph<'a> {
     let connecting_pairs: Vec<(&str, &str)> = INPUT
         .lines()
         .map(|line| line.trim().split(')').collect())
@@ -150,7 +152,7 @@ fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
     DiGraphMap::<_, ()>::from_edges(connecting_pairs)
 }
 
-fn total_orbits(graph: &DiGraphMap<&str, ()>) -> u32 {
+fn total_orbits(graph: &Graph) -> u32 {
     if let Some(root) = find_root(graph) {
         dijkstra(graph, root, None, |_| 1)
             .iter()
@@ -161,7 +163,7 @@ fn total_orbits(graph: &DiGraphMap<&str, ()>) -> u32 {
     }
 }
 
-fn find_root<'a>(graph: &'a DiGraphMap<&str, ()>) -> Option<&'a str> {
+fn find_root<'a>(graph: &Graph<'a>) -> Option<&'a str> {
     // grab any node
     let node = graph.nodes().next();
     if node.is_none() {
@@ -185,7 +187,7 @@ mod tests {
 
     #[test]
     fn test_total_orbits() {
-        let input = DiGraphMap::<_, ()>::from_edges(&[
+        let input = Graph::from_edges(&[
             ("A", "B"),
             ("B", "C"),
             ("C", "D"),
@@ -203,11 +205,7 @@ mod tests {
 
     #[test]
     fn test_find_root() {
-        let input = DiGraphMap::<_, ()>::from_edges(&[
-            ("COM", "B"),
-            ("B", "C"),
-            ("C", "D"),
-        ]);
+        let input = Graph::from_edges(&[("COM", "B"), ("B", "C"), ("C", "D")]);
         assert_eq!(find_root(&input), Some("COM"));
     }
 }
