@@ -68,12 +68,16 @@
 ///
 /// What is the total number of direct and indirect orbits in your map data?
 use petgraph::graphmap::DiGraphMap;
+use petgraph::visit::Dfs;
+use petgraph::visit::Reversed;
 
 const INPUT: &str = include_str!("../input/day_06.txt");
 
 pub fn run() {
     let orbits = get_input();
-    println!("{:?}", orbits);
+
+    let checksum = checksum(&orbits);
+    println!("The checksum of the orbits is: {}", checksum);
 }
 
 fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
@@ -86,4 +90,59 @@ fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
         })
         .collect();
     DiGraphMap::<_, ()>::from_edges(connecting_pairs)
+}
+
+fn checksum(graph: &DiGraphMap<&str, ()>) -> u32 {
+    0
+}
+
+fn find_root<'a>(graph: &'a DiGraphMap<&str, ()>) -> Option<&'a str> {
+    // grab any node
+    let node = graph.nodes().next();
+    if node.is_none() {
+        return None;
+    }
+
+    // use it to initialize a depth-first search iterator
+    let mut depth_first_search = Dfs::new(Reversed(graph), node.unwrap());
+
+    // walk up the tree to find the root
+    let mut root_node = None;
+    while let Some(next_node) = depth_first_search.next(Reversed(graph)) {
+        root_node = Some(next_node);
+    }
+    root_node
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_checksum() {
+        let input = DiGraphMap::<_, ()>::from_edges(&[
+            ("A", "B"),
+            ("B", "C"),
+            ("C", "D"),
+            ("D", "E"),
+            ("E", "F"),
+            ("B", "G"),
+            ("G", "H"),
+            ("D", "I"),
+            ("E", "J"),
+            ("J", "K"),
+            ("K", "L"),
+        ]);
+        assert_eq!(checksum(&input), 42);
+    }
+
+    #[test]
+    fn test_find_root() {
+        let input = DiGraphMap::<_, ()>::from_edges(&[
+            ("COM", "B"),
+            ("B", "C"),
+            ("C", "D"),
+        ]);
+        assert_eq!(find_root(&input), Some("COM"));
+    }
 }
