@@ -124,14 +124,15 @@
 /// object YOU are orbiting to the object SAN is orbiting? (Between the objects
 /// they are orbiting - not between YOU and SAN.)
 use petgraph::algo::dijkstra;
-use petgraph::graphmap::DiGraphMap;
+use petgraph::graphmap::GraphMap;
 use petgraph::visit::{Dfs, Reversed};
-type Graph<'a> = DiGraphMap<&'a str, ()>;
+use petgraph::{Directed, EdgeType, Undirected};
+type Graph<'a, Ty> = GraphMap<&'a str, (), Ty>;
 
 const INPUT: &str = include_str!("../input/day_06.txt");
 
 pub fn run() {
-    let orbits = get_input();
+    let orbits = get_input::<Directed>();
 
     let total = total_orbits(&orbits);
     println!(
@@ -140,7 +141,7 @@ pub fn run() {
     );
 }
 
-fn get_input<'a>() -> Graph<'a> {
+fn get_input<'a, Ty: EdgeType>() -> Graph<'a, Ty> {
     let connecting_pairs: Vec<(&str, &str)> = INPUT
         .lines()
         .map(|line| line.trim().split(')').collect())
@@ -149,10 +150,10 @@ fn get_input<'a>() -> Graph<'a> {
             _ => panic!("There were no 2 elements on a line in the input"),
         })
         .collect();
-    DiGraphMap::<_, ()>::from_edges(connecting_pairs)
+    Graph::<Ty>::from_edges(connecting_pairs)
 }
 
-fn total_orbits(graph: &Graph) -> u32 {
+fn total_orbits(graph: &Graph<Directed>) -> u32 {
     if let Some(root) = find_root(graph) {
         dijkstra(graph, root, None, |_| 1)
             .iter()
@@ -163,7 +164,7 @@ fn total_orbits(graph: &Graph) -> u32 {
     }
 }
 
-fn find_root<'a>(graph: &Graph<'a>) -> Option<&'a str> {
+fn find_root<'a>(graph: &Graph<'a, Directed>) -> Option<&'a str> {
     // grab any node
     let node = graph.nodes().next();
     if node.is_none() {
@@ -181,8 +182,12 @@ fn find_root<'a>(graph: &Graph<'a>) -> Option<&'a str> {
     root_node
 }
 
-fn transfers_needed(graph: &Graph, from: &str, to: &str) -> Option<u32> {
-    Some(0)
+fn transfers_needed(
+    graph: &Graph<Undirected>,
+    from: &str,
+    to: &str,
+) -> Option<u32> {
+        None
 }
 
 #[cfg(test)]
@@ -191,7 +196,7 @@ mod tests {
 
     #[test]
     fn test_total_orbits() {
-        let input = Graph::from_edges(&[
+        let input = Graph::<Directed>::from_edges(&[
             ("A", "B"),
             ("B", "C"),
             ("C", "D"),
@@ -209,13 +214,17 @@ mod tests {
 
     #[test]
     fn test_find_root() {
-        let input = Graph::from_edges(&[("COM", "B"), ("B", "C"), ("C", "D")]);
+        let input = Graph::<Directed>::from_edges(&[
+            ("COM", "B"),
+            ("B", "C"),
+            ("C", "D"),
+        ]);
         assert_eq!(find_root(&input), Some("COM"));
     }
 
     #[test]
     fn test_transfers_needed() {
-        let input = Graph::from_edges(&[
+        let input = Graph::<Undirected>::from_edges(&[
             ("COM", "B"),
             ("B", "C"),
             ("C", "D"),
