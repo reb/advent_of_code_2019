@@ -139,6 +139,16 @@ pub fn run() {
         "The total number of direct and indirect orbits is: {}",
         total
     );
+
+    let undirected_orbits = get_input::<Undirected>();
+
+    match transfers_needed(&undirected_orbits, "YOU", "SAN") {
+        Some(number) => println!(
+            "The orbital transfers required to get \"YOU\" to \"SAN\" is : {}",
+            number
+        ),
+        None => println!("No connection found between \"YOU\" and \"SAN\""),
+    };
 }
 
 fn get_input<'a, Ty: EdgeType>() -> Graph<'a, Ty> {
@@ -187,7 +197,21 @@ fn transfers_needed(
     from: &str,
     to: &str,
 ) -> Option<u32> {
+    if let Some(distance) =
+        dijkstra(graph, from, Some(to), |_| 1).iter().find_map(
+            |(&node, &distance)| {
+                if node == to {
+                    Some(distance)
+                } else {
+                    None
+                }
+            },
+        )
+    {
+        Some((distance - 2) as u32)
+    } else {
         None
+    }
 }
 
 #[cfg(test)]
