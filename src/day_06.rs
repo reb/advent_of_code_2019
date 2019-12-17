@@ -181,6 +181,10 @@ fn find_root<'a>(graph: &Graph<'a>) -> Option<&'a str> {
     root_node
 }
 
+fn transfers_needed(graph: &Graph, from: &str, to: &str) -> Option<u32> {
+    Some(0)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -207,5 +211,25 @@ mod tests {
     fn test_find_root() {
         let input = Graph::from_edges(&[("COM", "B"), ("B", "C"), ("C", "D")]);
         assert_eq!(find_root(&input), Some("COM"));
+    }
+
+    #[test]
+    fn test_transfers_needed() {
+        let input = Graph::from_edges(&[
+            ("COM", "B"),
+            ("B", "C"),
+            ("C", "D"),
+            ("D", "E"),
+            ("E", "F"),
+            ("B", "G"),
+            ("G", "H"),
+            ("D", "I"),
+            ("E", "J"),
+            ("J", "K"),
+            ("K", "L"),
+            ("K", "YOU"),
+            ("I", "SAN"),
+        ]);
+        assert_eq!(transfers_needed(&input, "YOU", "SAN"), Some(4));
     }
 }
