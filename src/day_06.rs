@@ -67,17 +67,19 @@
 /// The total number of direct and indirect orbits in this example is 42.
 ///
 /// What is the total number of direct and indirect orbits in your map data?
+use petgraph::algo::dijkstra;
 use petgraph::graphmap::DiGraphMap;
-use petgraph::visit::Dfs;
-use petgraph::visit::Reversed;
-
+use petgraph::visit::{Dfs, Reversed};
 const INPUT: &str = include_str!("../input/day_06.txt");
 
 pub fn run() {
     let orbits = get_input();
 
-    let checksum = checksum(&orbits);
-    println!("The checksum of the orbits is: {}", checksum);
+    let total = total_orbits(&orbits);
+    println!(
+        "The total number of direct and indirect orbits is: {}",
+        total
+    );
 }
 
 fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
@@ -92,8 +94,15 @@ fn get_input<'a>() -> DiGraphMap<&'a str, ()> {
     DiGraphMap::<_, ()>::from_edges(connecting_pairs)
 }
 
-fn checksum(graph: &DiGraphMap<&str, ()>) -> u32 {
-    0
+fn total_orbits(graph: &DiGraphMap<&str, ()>) -> u32 {
+    if let Some(root) = find_root(graph) {
+        dijkstra(graph, root, None, |_| 1)
+            .iter()
+            .map(|(_, distance)| distance)
+            .sum()
+    } else {
+        0
+    }
 }
 
 fn find_root<'a>(graph: &'a DiGraphMap<&str, ()>) -> Option<&'a str> {
@@ -119,7 +128,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_checksum() {
+    fn test_total_orbits() {
         let input = DiGraphMap::<_, ()>::from_edges(&[
             ("A", "B"),
             ("B", "C"),
@@ -133,7 +142,7 @@ mod tests {
             ("J", "K"),
             ("K", "L"),
         ]);
-        assert_eq!(checksum(&input), 42);
+        assert_eq!(total_orbits(&input), 42);
     }
 
     #[test]
