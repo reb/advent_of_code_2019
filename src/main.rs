@@ -3,6 +3,7 @@
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
+extern crate permutate;
 extern crate petgraph;
 
 use std::collections::HashMap;

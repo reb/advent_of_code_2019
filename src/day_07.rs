@@ -78,6 +78,7 @@
 /// Try every combination of phase settings on the amplifiers. What is the
 /// highest signal that can be sent to the thrusters?
 use intcode;
+use permutate::Permutator;
 
 const INPUT: &str = include_str!("../input/day_07.txt");
 

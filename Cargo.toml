@@ -7,3 +7,4 @@ authors = ["reb <reboumans@gmail.com>"]
 regex = "*"
 lazy_static = "*"
 petgraph = "*"
+permutate = "*"
