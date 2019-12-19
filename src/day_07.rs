@@ -78,13 +78,19 @@
 /// Try every combination of phase settings on the amplifiers. What is the
 /// highest signal that can be sent to the thrusters?
 use intcode;
-use permutate::Permutator;
+use permutate::ValuePermutator;
 
 const INPUT: &str = include_str!("../input/day_07.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let amplifier = intcode::load(INPUT);
+
+    let highest_signal = ValuePermutator::new(&[&[0, 1, 2, 3, 4]])
+        .map(|phase_sequence| run_amplifiers(&amplifier, &phase_sequence))
+        .max()
+        .unwrap();
+
+    println!("The highest signal possible is: {}", highest_signal);
 }
 
 fn run_amplifiers(
