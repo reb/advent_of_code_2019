@@ -4,9 +4,13 @@ enum Mode {
     Immediate,
 }
 
-pub fn execute(mut program: Vec<i32>, mut inputs: Vec<i32>) -> (Vec<i32>, Vec<i32>) {
+pub type Program = Vec<i32>;
+pub type Inputs = Vec<i32>;
+pub type Outputs = Vec<i32>;
+
+pub fn execute(mut program: Program, mut inputs: Inputs) -> (Program, Outputs) {
     let mut position = 0;
-    let mut outputs: Vec<i32> = Vec::new();
+    let mut outputs = Vec::new();
     loop {
         let (modes, opcode) = extract_modes(program[position]);
         let parameters = &program[position + 1..];
@@ -88,14 +92,14 @@ fn extract_modes(mut instruction: i32) -> (Vec<Mode>, i32) {
     (modes, opcode)
 }
 
-fn find_value(number: i32, mode: &Mode, program: &Vec<i32>) -> i32 {
+fn find_value(number: i32, mode: &Mode, program: &Program) -> i32 {
     match mode {
         Mode::Position => program[number as usize],
         Mode::Immediate => number,
     }
 }
 
-pub fn load(input: &str) -> Vec<i32> {
+pub fn load(input: &str) -> Program {
     input
         .trim()
         .split(',')
