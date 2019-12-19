@@ -77,10 +77,62 @@
 ///
 /// Try every combination of phase settings on the amplifiers. What is the
 /// highest signal that can be sent to the thrusters?
+use intcode;
 
 const INPUT: &str = include_str!("../input/day_07.txt");
 
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+fn run_amplifiers(
+    amplifier: &intcode::Program,
+    phase_sequence: &Vec<i32>,
+) -> i32 {
+    let mut signal = 0;
+    for &phase_setting in phase_sequence {
+        let inputs = vec![phase_setting, signal];
+        let (_, outputs) = intcode::execute(amplifier.clone(), inputs);
+        signal = outputs[0]
+    }
+    signal
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_run_amplifier_sequence_1() {
+        let amplifier = vec![
+            3, 15, 3, 16, 1002, 16, 10, 16, 1, 16, 15, 15, 4, 15, 99, 0, 0,
+        ];
+        let phase_sequence = vec![4, 3, 2, 1, 0];
+
+        assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 43210);
+    }
+
+    #[test]
+    fn test_run_amplifier_sequence_2() {
+        let amplifier = vec![
+            3, 23, 3, 24, 1002, 24, 10, 24, 1002, 23, -1, 23, 101, 5, 23, 23,
+            1, 24, 23, 23, 4, 23, 99, 0, 0,
+        ];
+        let phase_sequence = vec![0, 1, 2, 3, 4];
+
+        assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 54321);
+    }
+
+    #[test]
+    fn test_run_amplifier_sequence_3() {
+        let amplifier = vec![
+            3, 31, 3, 32, 1002, 32, 10, 32, 1001, 31, -2, 31, 1007, 31, 0, 33,
+            1002, 33, 7, 33, 1, 33, 31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0,
+        ];
+
+        let phase_sequence = vec![1, 0, 4, 3, 2];
+
+        assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 65210);
+    }
 }
