@@ -18,13 +18,15 @@ pub fn execute(mut program: Program, mut inputs: Inputs) -> (Program, Outputs) {
         match (opcode, parameters) {
             (99, _) => break,
             (1, &[first, second, write, ..]) => {
-                program[write as usize] = find_value(first, &(modes[0]), &program)
-                    + find_value(second, &(modes[1]), &program);
+                program[write as usize] =
+                    find_value(first, &(modes[0]), &program)
+                        + find_value(second, &(modes[1]), &program);
                 position += 4;
             }
             (2, &[first, second, write, ..]) => {
-                program[write as usize] = find_value(first, &(modes[0]), &program)
-                    * find_value(second, &(modes[1]), &program);
+                program[write as usize] =
+                    find_value(first, &(modes[0]), &program)
+                        * find_value(second, &(modes[1]), &program);
                 position += 4;
             }
             (3, &[write, ..]) => {
@@ -50,22 +52,24 @@ pub fn execute(mut program: Program, mut inputs: Inputs) -> (Program, Outputs) {
                 }
             }
             (7, &[first, second, write, ..]) => {
-                let value_to_write = match find_value(first, &modes[0], &program)
-                    < find_value(second, &modes[1], &program)
-                {
-                    true => 1,
-                    false => 0,
-                };
+                let value_to_write =
+                    match find_value(first, &modes[0], &program)
+                        < find_value(second, &modes[1], &program)
+                    {
+                        true => 1,
+                        false => 0,
+                    };
                 program[write as usize] = value_to_write;
                 position += 4;
             }
             (8, &[first, second, write, ..]) => {
-                let value_to_write = match find_value(first, &modes[0], &program)
-                    == find_value(second, &modes[1], &program)
-                {
-                    true => 1,
-                    false => 0,
-                };
+                let value_to_write =
+                    match find_value(first, &modes[0], &program)
+                        == find_value(second, &modes[1], &program)
+                    {
+                        true => 1,
+                        false => 0,
+                    };
                 program[write as usize] = value_to_write;
                 position += 4;
             }
@@ -244,7 +248,8 @@ mod tests {
     #[test]
     fn test_execute_opcode_5_and_6_position_mode_0() {
         // take an input, output 0 if the input was 0
-        let input_program = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let input_program =
+            vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
         let inputs = vec![0];
 
         let (_, outputs) = execute(input_program, inputs);
@@ -254,7 +259,8 @@ mod tests {
     #[test]
     fn test_execute_opcode_5_and_6_position_mode_1() {
         // take an input, output 1 if the input was not 0
-        let input_program = vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+        let input_program =
+            vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
         let inputs = vec![2];
 
         let (_, outputs) = execute(input_program, inputs);
@@ -264,7 +270,8 @@ mod tests {
     #[test]
     fn test_execute_opcode_5_and_6_immediate_mode_0() {
         // take an input, output 0 if the input was 0
-        let input_program = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let input_program =
+            vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
         let inputs = vec![0];
 
         let (_, outputs) = execute(input_program, inputs);
@@ -274,7 +281,8 @@ mod tests {
     #[test]
     fn test_execute_opcode_5_and_6_immediate_mode_1() {
         // take an input, output 1 if the input was not 0
-        let input_program = vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+        let input_program =
+            vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
         let inputs = vec![2];
 
         let (_, outputs) = execute(input_program, inputs);
@@ -285,9 +293,9 @@ mod tests {
     fn test_execute_larger_example_999() {
         // take an input, output 999 if the input was below 8
         let input_program = vec![
-            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
-            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
-            20, 1105, 1, 46, 98, 99,
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+            1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
         ];
         let inputs = vec![7];
 
@@ -299,9 +307,9 @@ mod tests {
     fn test_execute_larger_example_1000() {
         // take an input, output 1000 if the input was equal to 8
         let input_program = vec![
-            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
-            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
-            20, 1105, 1, 46, 98, 99,
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+            1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
         ];
         let inputs = vec![8];
 
@@ -313,9 +321,9 @@ mod tests {
     fn test_execute_larger_example_1001() {
         // take an input, output 1001 if the input was greater than 8
         let input_program = vec![
-            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31, 1106, 0, 36, 98, 0,
-            0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104, 999, 1105, 1, 46, 1101, 1000, 1, 20, 4,
-            20, 1105, 1, 46, 98, 99,
+            3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
+            1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
+            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
         ];
         let inputs = vec![9];
 
