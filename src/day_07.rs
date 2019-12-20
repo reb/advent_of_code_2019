@@ -85,12 +85,16 @@ const INPUT: &str = include_str!("../input/day_07.txt");
 pub fn run() {
     let amplifier = intcode::load(INPUT);
 
-    let highest_signal = ValuePermutator::new(&[&[0, 1, 2, 3, 4]])
-        .map(|phase_sequence| run_amplifiers(&amplifier, &phase_sequence))
-        .max()
-        .unwrap();
+    let highest_signal = max_signal(&amplifier);
 
     println!("The highest signal possible is: {}", highest_signal);
+}
+
+fn max_signal(amplifier: &intcode::Program) -> i32 {
+    ValuePermutator::new(&[&[0, 1, 2, 3, 4]])
+        .map(|phase_sequence| run_amplifiers(&amplifier, &phase_sequence))
+        .max()
+        .unwrap()
 }
 
 fn run_amplifiers(
@@ -118,6 +122,7 @@ mod tests {
         let phase_sequence = vec![4, 3, 2, 1, 0];
 
         assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 43210);
+        assert_eq!(max_signal(&amplifier), 43210);
     }
 
     #[test]
@@ -129,6 +134,7 @@ mod tests {
         let phase_sequence = vec![0, 1, 2, 3, 4];
 
         assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 54321);
+        assert_eq!(max_signal(&amplifier), 54321);
     }
 
     #[test]
@@ -141,5 +147,6 @@ mod tests {
         let phase_sequence = vec![1, 0, 4, 3, 2];
 
         assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 65210);
+        assert_eq!(max_signal(&amplifier), 65210);
     }
 }
