@@ -162,7 +162,7 @@ fn run_amplifiers(
     let mut signal = 0;
     for &phase_setting in phase_sequence {
         let inputs = vec![phase_setting, signal];
-        let (_, _, outputs) = intcode::execute(amplifier.clone(), inputs);
+        let (_, _, outputs) = intcode::execute(amplifier.clone(), 0, inputs);
         signal = outputs[0]
     }
     signal
