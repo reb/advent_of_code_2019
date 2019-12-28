@@ -132,7 +132,6 @@
 /// Find the input noun and verb that cause the program to produce the output
 /// 19690720. What is 100 * noun + verb? (For example, if noun=12 and verb=2,
 /// the answer would be 1202.)
-
 use intcode;
 
 const INPUT: &str = include_str!("../input/day_02.txt");
@@ -146,7 +145,7 @@ pub fn run() {
         program[1] = 12;
         program[2] = 2;
 
-        let (ran_program, _) = intcode::execute(program, Vec::new());
+        let (ran_program, _, _) = intcode::execute(program, Vec::new());
         println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", ran_program[0]);
     }
 
@@ -158,7 +157,7 @@ pub fn run() {
                 program[1] = noun;
                 program[2] = verb;
 
-                let (ran_program, _) = intcode::execute(program, Vec::new());
+                let (ran_program, _, _) = intcode::execute(program, Vec::new());
                 if ran_program[0] == 19690720 {
                     let answer = 100 * noun + verb;
                     println!("The input noun and verb to produce the output 19690720 is: {}", answer);
@@ -167,6 +166,4 @@ pub fn run() {
             }
         }
     }
-
-
 }
