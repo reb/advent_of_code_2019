@@ -163,12 +163,16 @@ fn run_amplifiers(
     amplifier: &intcode::Program,
     phase_sequence: &Vec<i32>,
 ) -> i32 {
-    let mut signal = 0;
+    // initialize phase settings
+    let mut programs = Vec::new();
     for &phase_setting in phase_sequence {
-        let inputs = vec![phase_setting, signal];
-        let (_, _, outputs) = intcode::execute(amplifier.clone(), 0, inputs);
-        signal = outputs[0]
+        let inputs = vec![phase_setting];
+        let (program, status, _) = intcode::start(amplifier.clone(), inputs);
+        programs.push((program, status));
     }
+
+    let mut signal = 0;
+
     signal
 }
 

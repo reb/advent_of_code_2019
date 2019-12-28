@@ -174,7 +174,7 @@ pub fn run() {
 
     let air_conditioner_inputs = vec![1];
     let (_, _, outputs) =
-        intcode::execute(program.clone(), 0, air_conditioner_inputs);
+        intcode::start(program.clone(), air_conditioner_inputs);
 
     let air_conditioner_diagnostic_code = outputs.last().unwrap();
 
@@ -184,7 +184,7 @@ pub fn run() {
     );
 
     let thermal_radiator_inputs = vec![5];
-    let (_, _, outputs) = intcode::execute(program, 0, thermal_radiator_inputs);
+    let (_, _, outputs) = intcode::start(program, thermal_radiator_inputs);
 
     let thermal_radiator_diagnostic_code = outputs.last().unwrap();
 

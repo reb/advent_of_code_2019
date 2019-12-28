@@ -145,7 +145,7 @@ pub fn run() {
         program[1] = 12;
         program[2] = 2;
 
-        let (ran_program, _, _) = intcode::execute(program, 0, Vec::new());
+        let (ran_program, _, _) = intcode::start(program, Vec::new());
         println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", ran_program[0]);
     }
 
@@ -157,8 +157,7 @@ pub fn run() {
                 program[1] = noun;
                 program[2] = verb;
 
-                let (ran_program, _, _) =
-                    intcode::execute(program, 0, Vec::new());
+                let (ran_program, _, _) = intcode::start(program, Vec::new());
                 if ran_program[0] == 19690720 {
                     let answer = 100 * noun + verb;
                     println!("The input noun and verb to produce the output 19690720 is: {}", answer);

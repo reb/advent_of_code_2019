@@ -14,7 +14,27 @@ pub type Program = Vec<i32>;
 pub type Inputs = Vec<i32>;
 pub type Outputs = Vec<i32>;
 
-pub fn execute(
+pub fn start(
+    mut program: Program,
+    inputs: Inputs,
+) -> (Program, ExitStatus, Outputs) {
+    execute(program, 0, inputs)
+}
+
+pub fn resume(
+    mut program: Program,
+    status: ExitStatus,
+    inputs: Inputs,
+) -> (Program, ExitStatus, Outputs) {
+    match status {
+        ExitStatus::WaitingForInput(position) => {
+            execute(program, position, inputs)
+        }
+        _ => panic!("Trying to resume a finished program"),
+    }
+}
+
+fn execute(
     mut program: Program,
     starting_position: usize,
     inputs_vec: Inputs,
