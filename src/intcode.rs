@@ -15,14 +15,14 @@ pub type Inputs = Vec<i32>;
 pub type Outputs = Vec<i32>;
 
 pub fn start(
-    mut program: Program,
+    program: Program,
     inputs: Inputs,
 ) -> (Program, ExitStatus, Outputs) {
     execute(program, 0, inputs)
 }
 
 pub fn resume(
-    mut program: Program,
+    program: Program,
     status: ExitStatus,
     inputs: Inputs,
 ) -> (Program, ExitStatus, Outputs) {
