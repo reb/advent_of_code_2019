@@ -142,9 +142,17 @@ const INPUT: &str = include_str!("../input/day_07.txt");
 pub fn run() {
     let amplifier = intcode::load(INPUT);
 
-    let highest_signal = max_signal(&amplifier, 0..=4);
+    let no_feedback_highest_signal = max_signal(&amplifier, 0..=4);
+    println!(
+        "The highest signal possible with phase settings 0 through 4 is: {}",
+        no_feedback_highest_signal
+    );
 
-    println!("The highest signal possible is: {}", highest_signal);
+    let feedback_highest_signal = max_signal(&amplifier, 5..=9);
+    println!(
+        "With phase settings 5 through 9 (feedback) this is: {}",
+        feedback_highest_signal
+    );
 }
 
 fn max_signal<I>(amplifier: &intcode::Program, possible_settings: I) -> i32
