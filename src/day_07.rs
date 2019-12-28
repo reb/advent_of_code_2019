@@ -172,6 +172,21 @@ fn run_amplifiers(
     }
 
     let mut signal = 0;
+    while programs
+        .iter()
+        .all(|(_, status)| status != &intcode::ExitStatus::Finished)
+    {
+        programs = programs
+            .drain(0..)
+            .map(|(program, status)| {
+                let inputs = vec![signal];
+                let (new_program, new_status, outputs) =
+                    intcode::resume(program, status, inputs);
+                signal = outputs[0];
+                (new_program, new_status)
+            })
+            .collect();
+    }
 
     signal
 }
