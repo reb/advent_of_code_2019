@@ -142,13 +142,17 @@ const INPUT: &str = include_str!("../input/day_07.txt");
 pub fn run() {
     let amplifier = intcode::load(INPUT);
 
-    let highest_signal = max_signal(&amplifier);
+    let highest_signal = max_signal(&amplifier, 0..=4);
 
     println!("The highest signal possible is: {}", highest_signal);
 }
 
-fn max_signal(amplifier: &intcode::Program) -> i32 {
-    (0..=4)
+fn max_signal<I>(amplifier: &intcode::Program, possible_settings: I) -> i32
+where
+    I: Itertools<Item = i32>,
+    I::Item: std::clone::Clone,
+{
+    possible_settings
         .permutations(5)
         .map(|phase_sequence| run_amplifiers(&amplifier, &phase_sequence))
         .max()
@@ -180,7 +184,6 @@ mod tests {
         let phase_sequence = vec![4, 3, 2, 1, 0];
 
         assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 43210);
-        assert_eq!(max_signal(&amplifier), 43210);
     }
 
     #[test]
@@ -192,7 +195,6 @@ mod tests {
         let phase_sequence = vec![0, 1, 2, 3, 4];
 
         assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 54321);
-        assert_eq!(max_signal(&amplifier), 54321);
     }
 
     #[test]
@@ -205,6 +207,34 @@ mod tests {
         let phase_sequence = vec![1, 0, 4, 3, 2];
 
         assert_eq!(run_amplifiers(&amplifier, &phase_sequence), 65210);
-        assert_eq!(max_signal(&amplifier), 65210);
+    }
+
+    #[test]
+    fn test_max_signal_sequence_1() {
+        let amplifier = vec![
+            3, 15, 3, 16, 1002, 16, 10, 16, 1, 16, 15, 15, 4, 15, 99, 0, 0,
+        ];
+
+        assert_eq!(max_signal(&amplifier, 0..=4), 43210);
+    }
+
+    #[test]
+    fn test_max_signal_sequence_2() {
+        let amplifier = vec![
+            3, 23, 3, 24, 1002, 24, 10, 24, 1002, 23, -1, 23, 101, 5, 23, 23,
+            1, 24, 23, 23, 4, 23, 99, 0, 0,
+        ];
+
+        assert_eq!(max_signal(&amplifier, 0..=4), 54321);
+    }
+
+    #[test]
+    fn test_max_signal_sequence_3() {
+        let amplifier = vec![
+            3, 31, 3, 32, 1002, 32, 10, 32, 1001, 31, -2, 31, 1007, 31, 0, 33,
+            1002, 33, 7, 33, 1, 33, 31, 31, 1, 32, 31, 31, 4, 31, 99, 0, 0, 0,
+        ];
+
+        assert_eq!(max_signal(&amplifier, 0..=4), 65210);
     }
 }
