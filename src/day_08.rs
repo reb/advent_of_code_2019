@@ -44,8 +44,28 @@ use ndarray::{Array, Array3};
 const INPUT: &str = include_str!("../input/day_08.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let layers = load_layers(INPUT, 25, 6);
+
+    // find the layer with the fewest zeroes
+    let (most_zeroes_index, _) = layers
+        .outer_iter()
+        .map(|layer| layer.iter().filter(|&&c| c == '0').count())
+        .enumerate()
+        .min_by_key(|&(_, count)| count)
+        .unwrap();
+
+    let most_zeroes_layer = layers.slice(s![most_zeroes_index, .., ..]);
+    let ones = most_zeroes_layer.iter().filter(|&&c| c == '1').count();
+    let twos = most_zeroes_layer.iter().filter(|&&c| c == '2').count();
+
+    println!(
+        "On the layer with the fewest 0 digits, \
+         the number of 1 digits ({}) multiplied by \
+         the number of 2 digits ({}) is: {}",
+        ones,
+        twos,
+        ones * twos
+    );
 }
 
 fn load_layers(input: &str, wide: usize, tall: usize) -> Array3<char> {
