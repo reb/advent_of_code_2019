@@ -39,10 +39,35 @@
 /// To make sure the image wasn't corrupted during transmission, the Elves would
 /// like you to find the layer that contains the fewest 0 digits. On that layer,
 /// what is the number of 1 digits multiplied by the number of 2 digits?
+use ndarray::{Array, Array3};
 
 const INPUT: &str = include_str!("../input/day_08.txt");
 
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+fn load_layers(input: &str, wide: usize, tall: usize) -> Array3<char> {
+    let vector: Vec<char> = input.trim().chars().collect();
+    let layers = vector.len() / (tall * wide);
+    Array::from(vector)
+        .into_shape((layers, tall, wide))
+        .unwrap()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_load_layers() {
+        let input = "123456789012";
+        let output = array![
+            [['1', '2', '3'], ['4', '5', '6']],
+            [['7', '8', '9'], ['0', '1', '2']],
+        ];
+
+        assert_eq!(load_layers(input, 3, 2), output);
+    }
 }
