@@ -84,7 +84,7 @@
 /// 10
 ///
 /// What message is produced after decoding your image?
-use ndarray::{Array, Array3};
+use ndarray::{Array, Array2, Array3, Axis};
 
 const INPUT: &str = include_str!("../input/day_08.txt");
 
@@ -113,6 +113,10 @@ pub fn run() {
     );
 }
 
+fn decode(image: Array3<char>) -> Array2<char> {
+    Array::from(vec!['0']).into_shape((1, 1)).unwrap()
+}
+
 fn load_layers(input: &str, wide: usize, tall: usize) -> Array3<char> {
     let vector: Vec<char> = input.trim().chars().collect();
     let layers = vector.len() / (tall * wide);
@@ -134,5 +138,18 @@ mod tests {
         ];
 
         assert_eq!(load_layers(input, 3, 2), output);
+    }
+
+    #[test]
+    fn test_decode() {
+        let input = array![
+            [['0', '2'], ['2', '2']],
+            [['1', '1'], ['2', '2']],
+            [['2', '2'], ['1', '2']],
+            [['0', '0'], ['0', '0']],
+        ];
+        let output = array![['0', '1'], ['1', '0']];
+
+        assert_eq!(decode(input), output);
     }
 }
