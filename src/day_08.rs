@@ -84,7 +84,7 @@
 /// 10
 ///
 /// What message is produced after decoding your image?
-use ndarray::{Array, Array2, Array3, Axis};
+use ndarray::{Array, Array1, Array2, Array3, Axis};
 
 const INPUT: &str = include_str!("../input/day_08.txt");
 
@@ -114,7 +114,14 @@ pub fn run() {
 }
 
 fn decode(image: Array3<char>) -> Array2<char> {
-    Array::from(vec!['0']).into_shape((1, 1)).unwrap()
+    let shape = image.shape();
+    let flat_image: Array1<char> = image
+        .lanes(Axis(0))
+        .into_iter()
+        .map(|lane| *lane.iter().skip_while(|&&c| c == '2').next().unwrap())
+        .collect();
+
+    flat_image.into_shape((shape[1], shape[2])).unwrap()
 }
 
 fn load_layers(input: &str, wide: usize, tall: usize) -> Array3<char> {
