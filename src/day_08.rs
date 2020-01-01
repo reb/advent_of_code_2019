@@ -89,17 +89,17 @@ use ndarray::{Array, Array1, Array2, Array3, Axis};
 const INPUT: &str = include_str!("../input/day_08.txt");
 
 pub fn run() {
-    let layers = load_layers(INPUT, 25, 6);
+    let image = load_layers(INPUT, 25, 6);
 
     // find the layer with the fewest zeroes
-    let (most_zeroes_index, _) = layers
+    let (most_zeroes_index, _) = image
         .outer_iter()
         .map(|layer| layer.iter().filter(|&&c| c == '0').count())
         .enumerate()
         .min_by_key(|&(_, count)| count)
         .unwrap();
 
-    let most_zeroes_layer = layers.slice(s![most_zeroes_index, .., ..]);
+    let most_zeroes_layer = image.slice(s![most_zeroes_index, .., ..]);
     let ones = most_zeroes_layer.iter().filter(|&&c| c == '1').count();
     let twos = most_zeroes_layer.iter().filter(|&&c| c == '2').count();
 
@@ -111,6 +111,21 @@ pub fn run() {
         twos,
         ones * twos
     );
+
+    // decode the image
+    let decoded = decode(image);
+
+    // display the image
+    println!("The decoded image looks like:");
+    for row in decoded.genrows() {
+        for pixel in row.iter() {
+            match pixel {
+                '1' => print!("\u{2588}"),
+                _ => print!(" "),
+            }
+        }
+        print!("\n");
+    }
 }
 
 fn decode(image: Array3<char>) -> Array2<char> {
