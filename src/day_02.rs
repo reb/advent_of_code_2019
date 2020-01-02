@@ -142,11 +142,11 @@ pub fn run() {
     // reproduce the "1202 program alarm" by setting position 1 & 2
     {
         let mut program = base_program.clone();
-        program[1] = 12;
-        program[2] = 2;
+        program.insert(1, 12);
+        program.insert(2, 2);
 
         let (ran_program, _, _) = intcode::start(program, Vec::new());
-        println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", ran_program[0]);
+        println!("The value left at position 0 after reproducing the \"1202 program alarm\" is: {}", ran_program[&0]);
     }
 
     // try to find the output 19690720
@@ -154,11 +154,11 @@ pub fn run() {
         'finder: for noun in 0..=99 {
             for verb in 0..=99 {
                 let mut program = base_program.clone();
-                program[1] = noun;
-                program[2] = verb;
+                program.insert(1, noun);
+                program.insert(2, verb);
 
                 let (ran_program, _, _) = intcode::start(program, Vec::new());
-                if ran_program[0] == 19690720 {
+                if ran_program[&0] == 19690720 {
                     let answer = 100 * noun + verb;
                     println!("The input noun and verb to produce the output 19690720 is: {}", answer);
                     break 'finder;

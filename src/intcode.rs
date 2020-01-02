@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 enum Mode {
     Position,
@@ -8,10 +10,10 @@ enum Mode {
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ExitStatus {
     Finished,
-    WaitingForInput(usize, usize),
+    WaitingForInput(i64, i64),
 }
 
-pub type Program = Vec<i64>;
+pub type Program = HashMap<i64, i64>;
 pub type Inputs = Vec<i64>;
 pub type Outputs = Vec<i64>;
 
@@ -37,8 +39,8 @@ pub fn resume(
 
 fn execute(
     mut program: Program,
-    starting_position: usize,
-    starting_base: usize,
+    starting_position: i64,
+    starting_base: i64,
     inputs_vec: Inputs,
 ) -> (Program, ExitStatus, Outputs) {
     let mut inputs = inputs_vec.iter();
@@ -46,29 +48,33 @@ fn execute(
     let mut base = starting_base;
     let mut outputs = Vec::new();
     loop {
-        let (modes, opcode) = extract_modes(program[position]);
-        let parameters = &program[position + 1..];
+        let (modes, opcode) = extract_modes(*program.get(&position).unwrap());
 
-        match (opcode, parameters) {
-            (99, _) => {
+        match opcode {
+            99 => {
                 return (program, ExitStatus::Finished, outputs);
             }
-            (1, &[first, second, write, ..]) => {
-                program[write as usize] =
-                    find_value(first, &(modes[0]), base, &program)
-                        + find_value(second, &(modes[1]), base, &program);
+            1 => {
+                let first = find_value(position + 1, &modes[0], base, &program);
+                let second =
+                    find_value(position + 2, &modes[1], base, &program);
+                let write = program[&(position + 3)];
+                program.insert(write, first + second);
                 position += 4;
             }
-            (2, &[first, second, write, ..]) => {
-                program[write as usize] =
-                    find_value(first, &(modes[0]), base, &program)
-                        * find_value(second, &(modes[1]), base, &program);
+            2 => {
+                let first = find_value(position + 1, &modes[0], base, &program);
+                let second =
+                    find_value(position + 2, &modes[1], base, &program);
+                let write = program[&(position + 3)];
+                program.insert(write, first * second);
                 position += 4;
             }
-            (3, &[write, ..]) => {
+            3 => {
                 match inputs.next() {
                     Some(&input) => {
-                        program[write as usize] = input;
+                        let write = program[&(position + 1)];
+                        program.insert(write, input);
                         position += 2;
                     }
                     None => {
@@ -80,51 +86,59 @@ fn execute(
                     }
                 };
             }
-            (4, &[read, ..]) => {
-                outputs.push(find_value(read, &modes[0], base, &program));
+            4 => {
+                let read = find_value(position + 1, &modes[0], base, &program);
+                outputs.push(read);
                 position += 2;
             }
-            (5, &[condition, jump, ..]) => {
-                if find_value(condition, &modes[0], base, &program) != 0 {
-                    position =
-                        find_value(jump, &modes[1], base, &program) as usize;
+            5 => {
+                let condition =
+                    find_value(position + 1, &modes[0], base, &program);
+                let jump = find_value(position + 2, &modes[1], base, &program);
+                if condition != 0 {
+                    position = jump;
                 } else {
                     position += 3
                 }
             }
-            (6, &[condition, jump, ..]) => {
-                if find_value(condition, &modes[0], base, &program) == 0 {
-                    position =
-                        find_value(jump, &modes[1], base, &program) as usize;
+            6 => {
+                let condition =
+                    find_value(position + 1, &modes[0], base, &program);
+                let jump = find_value(position + 2, &modes[1], base, &program);
+                if condition == 0 {
+                    position = jump;
                 } else {
                     position += 3
                 }
             }
-            (7, &[first, second, write, ..]) => {
-                let value_to_write =
-                    match find_value(first, &modes[0], base, &program)
-                        < find_value(second, &modes[1], base, &program)
-                    {
-                        true => 1,
-                        false => 0,
-                    };
-                program[write as usize] = value_to_write;
+            7 => {
+                let first = find_value(position + 1, &modes[0], base, &program);
+                let second =
+                    find_value(position + 2, &modes[1], base, &program);
+                let write = program[&(position + 3)];
+                let value_to_write = match first < second {
+                    true => 1,
+                    false => 0,
+                };
+                program.insert(write, value_to_write);
                 position += 4;
             }
-            (8, &[first, second, write, ..]) => {
-                let value_to_write =
-                    match find_value(first, &modes[0], base, &program)
-                        == find_value(second, &modes[1], base, &program)
-                    {
-                        true => 1,
-                        false => 0,
-                    };
-                program[write as usize] = value_to_write;
+            8 => {
+                let first = find_value(position + 1, &modes[0], base, &program);
+                let second =
+                    find_value(position + 2, &modes[1], base, &program);
+                let write = program[&(position + 3)];
+                let value_to_write = match first == second {
+                    true => 1,
+                    false => 0,
+                };
+                program.insert(write, value_to_write);
                 position += 4;
             }
-            (9, &[mutation, ..]) => {
-                base +=
-                    find_value(mutation, &modes[0], base, &program) as usize;
+            9 => {
+                let mutation =
+                    find_value(position + 1, &modes[0], base, &program);
+                base += mutation;
                 position += 2;
             }
             invalid => {
@@ -167,6 +181,8 @@ pub fn load(input: &str) -> Program {
         .split(',')
         .map(|number| number.parse())
         .filter_map(Result::ok)
+        .enumerate()
+        .map(|(index, number)| (index as i64, number))
         .collect()
 }
 
@@ -190,312 +206,319 @@ mod tests {
     }
 
     #[test]
-    fn test_execute_1() {
-        let input = vec![1, 0, 0, 0, 99];
-        let output = vec![2, 0, 0, 0, 99];
+    fn test_start_1() {
+        let input = program![1, 0, 0, 0, 99];
+        let output = program![2, 0, 0, 0, 99];
 
         assert_eq!(
-            execute(input, 0, 0, Vec::new()),
+            start(input, Vec::new()),
             (output, ExitStatus::Finished, Vec::new())
         );
     }
 
     #[test]
-    fn test_execute_2() {
-        let input = vec![2, 3, 0, 3, 99];
-        let output = vec![2, 3, 0, 6, 99];
+    fn test_start_2() {
+        let input = program![2, 3, 0, 3, 99];
+        let output = program![2, 3, 0, 6, 99];
 
         assert_eq!(
-            execute(input, 0, 0, Vec::new()),
+            start(input, Vec::new()),
             (output, ExitStatus::Finished, Vec::new())
         );
     }
 
     #[test]
-    fn test_execute_3() {
-        let input = vec![2, 4, 4, 5, 99, 0];
-        let output = vec![2, 4, 4, 5, 99, 9801];
+    fn test_start_3() {
+        let input = program![2, 4, 4, 5, 99, 0];
+        let output = program![2, 4, 4, 5, 99, 9801];
 
         assert_eq!(
-            execute(input, 0, 0, Vec::new()),
+            start(input, Vec::new()),
             (output, ExitStatus::Finished, Vec::new())
         );
     }
 
     #[test]
-    fn test_execute_4() {
-        let input = vec![1, 1, 1, 4, 99, 5, 6, 0, 99];
-        let output = vec![30, 1, 1, 4, 2, 5, 6, 0, 99];
+    fn test_start_4() {
+        let input = program![1, 1, 1, 4, 99, 5, 6, 0, 99];
+        let output = program![30, 1, 1, 4, 2, 5, 6, 0, 99];
 
         assert_eq!(
-            execute(input, 0, 0, Vec::new()),
+            start(input, Vec::new()),
             (output, ExitStatus::Finished, Vec::new())
         );
     }
 
     #[test]
-    fn test_execute_5() {
-        let input = vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
-        let output = vec![3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50];
+    fn test_start_5() {
+        let input = program![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
+        let output = program![3500, 9, 10, 70, 2, 3, 11, 0, 99, 30, 40, 50];
 
         assert_eq!(
-            execute(input, 0, 0, Vec::new()),
+            start(input, Vec::new()),
             (output, ExitStatus::Finished, Vec::new())
         );
     }
 
     #[test]
-    fn test_execute_waiting_for_input_exit_status() {
-        let program = vec![3, 0, 4, 0, 99];
+    fn test_start_waiting_for_input_exit_status() {
+        let program = program![3, 0, 4, 0, 99];
         let inputs = Vec::new();
-        let (_, status, _) = execute(program, 0, 0, inputs);
+        let (_, status, _) = start(program, inputs);
         assert_eq!(status, ExitStatus::WaitingForInput(0, 0));
     }
 
     #[test]
-    fn test_execute_resume_from_other_start() {
-        let input = vec![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
-        let starting_position = 8;
+    fn test_resume() {
+        let input = program![1, 9, 10, 3, 2, 3, 11, 0, 99, 30, 40, 50];
+        let exit_status = ExitStatus::WaitingForInput(8, 0);
         assert_eq!(
-            execute(input.clone(), starting_position, 0, Vec::new()),
+            resume(input.clone(), exit_status, Vec::new()),
             (input, ExitStatus::Finished, Vec::new())
         );
     }
+    #[test]
+    #[should_panic]
+    fn test_resume_on_finished_program() {
+        let input = program![99];
+        let exit_status = ExitStatus::Finished;
+        resume(input.clone(), exit_status, Vec::new());
+    }
 
     #[test]
-    fn test_execute_opcode_3_and_4() {
-        let input_program = vec![3, 0, 4, 0, 99];
+    fn test_start_opcode_3_and_4() {
+        let input_program = program![3, 0, 4, 0, 99];
         let inputs = vec![1];
-        let output_program = vec![1, 0, 4, 0, 99];
+        let output_program = program![1, 0, 4, 0, 99];
         let outputs = vec![1];
         assert_eq!(
-            execute(input_program, 0, 0, inputs),
+            start(input_program, inputs),
             (output_program, ExitStatus::Finished, outputs)
         );
     }
 
     #[test]
-    fn test_execute_opcode_8_position_mode_true() {
+    fn test_start_opcode_8_position_mode_true() {
         // consider whether the input is equal to 8, output 1 if it is
-        let input_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_program = program![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
         let inputs = vec![8];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_8_position_mode_false() {
+    fn test_start_opcode_8_position_mode_false() {
         // consider whether the input is equal to 8, output 0 if it is not
-        let input_program = vec![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_program = program![3, 9, 8, 9, 10, 9, 4, 9, 99, -1, 8];
         let inputs = vec![7];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![0]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_7_position_mode_true() {
+    fn test_start_opcode_7_position_mode_true() {
         // consider whether the input is less than to 8, output 1 if it is
-        let input_program = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_program = program![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
         let inputs = vec![7];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_7_position_mode_false() {
+    fn test_start_opcode_7_position_mode_false() {
         // consider whether the input is less than to 8, output 0 if it is not
-        let input_program = vec![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
+        let input_program = program![3, 9, 7, 9, 10, 9, 4, 9, 99, -1, 8];
         let inputs = vec![8];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![0]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_8_immediate_mode_true() {
+    fn test_start_opcode_8_immediate_mode_true() {
         // consider whether the input is equal to 8, output 1 if it is
-        let input_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let input_program = program![3, 3, 1108, -1, 8, 3, 4, 3, 99];
         let inputs = vec![8];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_8_immediate_mode_false() {
+    fn test_start_opcode_8_immediate_mode_false() {
         // consider whether the input is equal to 8, output 0 if it is not
-        let input_program = vec![3, 3, 1108, -1, 8, 3, 4, 3, 99];
+        let input_program = program![3, 3, 1108, -1, 8, 3, 4, 3, 99];
         let inputs = vec![7];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![0]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_7_immediate_mode_true() {
+    fn test_start_opcode_7_immediate_mode_true() {
         // consider whether the input is less than to 8, output 1 if it is
-        let input_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let input_program = program![3, 3, 1107, -1, 8, 3, 4, 3, 99];
         let inputs = vec![7];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_7_immediate_mode_false() {
+    fn test_start_opcode_7_immediate_mode_false() {
         // consider whether the input is less than to 8, output 0 if it is not
-        let input_program = vec![3, 3, 1107, -1, 8, 3, 4, 3, 99];
+        let input_program = program![3, 3, 1107, -1, 8, 3, 4, 3, 99];
         let inputs = vec![8];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![0]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_5_and_6_position_mode_0() {
+    fn test_start_opcode_5_and_6_position_mode_0() {
         // take an input, output 0 if the input was 0
         let input_program =
-            vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+            program![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
         let inputs = vec![0];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![0]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_5_and_6_position_mode_1() {
+    fn test_start_opcode_5_and_6_position_mode_1() {
         // take an input, output 1 if the input was not 0
         let input_program =
-            vec![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
+            program![3, 12, 6, 12, 15, 1, 13, 14, 13, 4, 13, 99, -1, 0, 1, 9];
         let inputs = vec![2];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_5_and_6_immediate_mode_0() {
+    fn test_start_opcode_5_and_6_immediate_mode_0() {
         // take an input, output 0 if the input was 0
         let input_program =
-            vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+            program![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
         let inputs = vec![0];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![0]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_5_and_6_immediate_mode_1() {
+    fn test_start_opcode_5_and_6_immediate_mode_1() {
         // take an input, output 1 if the input was not 0
         let input_program =
-            vec![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
+            program![3, 3, 1105, -1, 9, 1101, 0, 0, 12, 4, 12, 99, 1];
         let inputs = vec![2];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_larger_example_999() {
+    fn test_start_larger_example_999() {
         // take an input, output 999 if the input was below 8
-        let input_program = vec![
+        let input_program = program![
             3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
             1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
-            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
+            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99
         ];
         let inputs = vec![7];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![999]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_larger_example_1000() {
+    fn test_start_larger_example_1000() {
         // take an input, output 1000 if the input was equal to 8
-        let input_program = vec![
+        let input_program = program![
             3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
             1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
-            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
+            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99
         ];
         let inputs = vec![8];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1000]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_larger_example_1001() {
+    fn test_start_larger_example_1001() {
         // take an input, output 1001 if the input was greater than 8
-        let input_program = vec![
+        let input_program = program![
             3, 21, 1008, 21, 8, 20, 1005, 20, 22, 107, 8, 21, 20, 1006, 20, 31,
             1106, 0, 36, 98, 0, 0, 1002, 21, 125, 20, 4, 20, 1105, 1, 46, 104,
-            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99,
+            999, 1105, 1, 46, 1101, 1000, 1, 20, 4, 20, 1105, 1, 46, 98, 99
         ];
         let inputs = vec![9];
 
-        let (_, status, outputs) = execute(input_program, 0, 0, inputs);
+        let (_, status, outputs) = start(input_program, inputs);
         assert_eq!(outputs, vec![1001]);
         assert_eq!(status, ExitStatus::Finished);
     }
 
     #[test]
-    fn test_execute_opcode_9() {
+    fn test_start_opcode_9() {
         // take no input and produce a copy of itself as outputs
-        let input_program = vec![
+        let input_program = program![
             109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101,
-            0, 99,
+            0, 99
         ];
         let expected_outputs = vec![
             109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101,
             0, 99,
         ];
 
-        let (_, _, actual_outputs) = execute(input_program, 0, 0, Vec::new());
+        let (_, _, actual_outputs) = start(input_program, Vec::new());
         assert_eq!(actual_outputs, expected_outputs);
     }
 
     #[test]
-    fn test_execute_large_number_example_1() {
+    fn test_start_large_number_example_1() {
         // should output a 16-digit number
-        let input_program = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
+        let input_program = program![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
 
-        let (_, _, outputs) = execute(input_program, 0, 0, Vec::new());
+        let (_, _, outputs) = start(input_program, Vec::new());
         assert_eq!(outputs[0], 1219070632396864);
     }
 
     #[test]
-    fn test_execute_large_number_example_2() {
+    fn test_start_large_number_example_2() {
         // should output a 16-digit number
-        let input_program = vec![104, 1125899906842624, 99];
+        let input_program = program![104, 1125899906842624, 99];
 
-        let (_, _, outputs) = execute(input_program, 0, 0, Vec::new());
+        let (_, _, outputs) = start(input_program, Vec::new());
         assert_eq!(outputs[0], 1125899906842624);
     }
 
     #[test]
-    fn test_execute_modes() {
-        let input = vec![1002, 4, 3, 4, 33];
-        let output = vec![1002, 4, 3, 4, 99];
+    fn test_start_modes() {
+        let input = program![1002, 4, 3, 4, 33];
+        let output = program![1002, 4, 3, 4, 99];
 
         assert_eq!(
-            execute(input, 0, 0, Vec::new()),
+            start(input, Vec::new()),
             (output, ExitStatus::Finished, Vec::new())
         );
     }
