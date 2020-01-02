@@ -170,8 +170,23 @@ pub fn load(input: &str) -> Program {
 }
 
 #[cfg(test)]
+#[macro_use]
 mod tests {
     use super::*;
+
+    macro_rules! program {
+        ( $( $x:expr ),* ) => {
+            {
+            let mut temp_program = HashMap::new();
+            let mut index = -1;
+            $(
+                index += 1;
+                temp_program.insert(index, $x);
+            )*
+            temp_program
+            }
+        };
+    }
 
     #[test]
     fn test_execute_1() {

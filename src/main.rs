@@ -12,6 +12,7 @@ extern crate petgraph;
 use std::collections::HashMap;
 use std::env;
 
+#[macro_use]
 mod intcode;
 
 fn main() {
