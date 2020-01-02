@@ -51,9 +51,11 @@ fn execute(
         let (modes, opcode) = extract_modes(program[&position]);
 
         match opcode {
+            // exit the program
             99 => {
                 return (program, ExitStatus::Finished, outputs);
             }
+            // add the first and the second parameter, write to the third
             1 => {
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
@@ -62,6 +64,7 @@ fn execute(
                 program.insert(write, first + second);
                 position += 4;
             }
+            // multiply the first and the second parameter, write to the third
             2 => {
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
@@ -70,6 +73,7 @@ fn execute(
                 program.insert(write, first * second);
                 position += 4;
             }
+            // get an input, write it to the first parameter
             3 => {
                 match inputs.next() {
                     Some(&input) => {
@@ -86,11 +90,13 @@ fn execute(
                     }
                 };
             }
+            // write the first parameter to output
             4 => {
                 let read = find_value(position + 1, &modes[0], base, &program);
                 outputs.push(read);
                 position += 2;
             }
+            // test the if the first parameter is not 0, if so jump to the second
             5 => {
                 let condition =
                     find_value(position + 1, &modes[0], base, &program);
@@ -101,6 +107,7 @@ fn execute(
                     position += 3
                 }
             }
+            // test the if the first parameter is 0, if so jump to the second
             6 => {
                 let condition =
                     find_value(position + 1, &modes[0], base, &program);
@@ -111,6 +118,8 @@ fn execute(
                     position += 3
                 }
             }
+            // test the if the first parameter is smaller than the second,
+            // if so write 1 to the third, otherwise write 0
             7 => {
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
@@ -123,6 +132,8 @@ fn execute(
                 program.insert(write, value_to_write);
                 position += 4;
             }
+            // test the if the first parameter is equal to the second,
+            // if so write 1 to the third, otherwise write 0
             8 => {
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
@@ -135,6 +146,7 @@ fn execute(
                 program.insert(write, value_to_write);
                 position += 4;
             }
+            // mutate the relative base with the first parameter
             9 => {
                 let mutation =
                     find_value(position + 1, &modes[0], base, &program);
