@@ -425,6 +425,40 @@ mod tests {
     }
 
     #[test]
+    fn test_execute_opcode_9() {
+        // take no input and produce a copy of itself as outputs
+        let input_program = vec![
+            109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101,
+            0, 99,
+        ];
+        let expected_outputs = vec![
+            109, 1, 204, -1, 1001, 100, 1, 100, 1008, 100, 16, 101, 1006, 101,
+            0, 99,
+        ];
+
+        let (_, _, actual_outputs) = execute(input_program, 0, Vec::new());
+        assert_eq!(actual_outputs, expected_outputs);
+    }
+
+    #[test]
+    fn test_execute_large_number_example_1() {
+        // should output a 16-digit number
+        let input_program = vec![1102, 34915192, 34915192, 7, 4, 7, 99, 0];
+
+        let (_, _, outputs) = execute(input_program, 0, Vec::new());
+        assert_eq!(outputs[0], 1219070632396864);
+    }
+
+    #[test]
+    fn test_execute_large_number_example_2() {
+        // should output a 16-digit number
+        let input_program = vec![104, 1125899906842624, 99];
+
+        let (_, _, outputs) = execute(input_program, 0, Vec::new());
+        assert_eq!(outputs[0], 1125899906842624);
+    }
+
+    #[test]
     fn test_execute_modes() {
         let input = vec![1002, 4, 3, 4, 33];
         let output = vec![1002, 4, 3, 4, 99];
