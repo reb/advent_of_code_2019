@@ -48,7 +48,7 @@ fn execute(
     let mut base = starting_base;
     let mut outputs = Vec::new();
     loop {
-        let (modes, opcode) = extract_modes(*program.get(&position).unwrap());
+        let (modes, opcode) = extract_modes(program[&position]);
 
         match opcode {
             99 => {
@@ -167,11 +167,11 @@ fn extract_modes(mut instruction: i64) -> (Vec<Mode>, i64) {
 }
 
 fn find_value(position: i64, mode: &Mode, base: i64, program: &Program) -> i64 {
-    let number = program[&position];
+    let number = *program.get(&position).unwrap_or(&0);
     match mode {
-        Mode::Position => program[&number],
+        Mode::Position => *program.get(&number).unwrap_or(&0),
         Mode::Immediate => number,
-        Mode::Relative => program[&(base + number)],
+        Mode::Relative => *program.get(&(base + number)).unwrap_or(&0),
     }
 }
 
