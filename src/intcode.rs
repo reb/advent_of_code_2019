@@ -60,7 +60,8 @@ fn execute(
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
                     find_value(position + 2, &modes[1], base, &program);
-                let write = program[&(position + 3)];
+                let write =
+                    writing_position(position + 3, &modes[2], base, &program);
                 program.insert(write, first + second);
                 position += 4;
             }
@@ -69,7 +70,8 @@ fn execute(
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
                     find_value(position + 2, &modes[1], base, &program);
-                let write = program[&(position + 3)];
+                let write =
+                    writing_position(position + 3, &modes[2], base, &program);
                 program.insert(write, first * second);
                 position += 4;
             }
@@ -77,7 +79,12 @@ fn execute(
             3 => {
                 match inputs.next() {
                     Some(&input) => {
-                        let write = program[&(position + 1)];
+                        let write = writing_position(
+                            position + 1,
+                            &modes[0],
+                            base,
+                            &program,
+                        );
                         program.insert(write, input);
                         position += 2;
                     }
@@ -124,7 +131,8 @@ fn execute(
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
                     find_value(position + 2, &modes[1], base, &program);
-                let write = program[&(position + 3)];
+                let write =
+                    writing_position(position + 3, &modes[2], base, &program);
                 let value_to_write = match first < second {
                     true => 1,
                     false => 0,
@@ -138,7 +146,8 @@ fn execute(
                 let first = find_value(position + 1, &modes[0], base, &program);
                 let second =
                     find_value(position + 2, &modes[1], base, &program);
-                let write = program[&(position + 3)];
+                let write =
+                    writing_position(position + 3, &modes[2], base, &program);
                 let value_to_write = match first == second {
                     true => 1,
                     false => 0,
@@ -184,6 +193,22 @@ fn find_value(position: i64, mode: &Mode, base: i64, program: &Program) -> i64 {
         Mode::Position => *program.get(&number).unwrap_or(&0),
         Mode::Immediate => number,
         Mode::Relative => *program.get(&(base + number)).unwrap_or(&0),
+    }
+}
+
+fn writing_position(
+    position: i64,
+    mode: &Mode,
+    base: i64,
+    program: &Program,
+) -> i64 {
+    let number = *program.get(&position).unwrap_or(&0);
+    match mode {
+        Mode::Position => number,
+        Mode::Immediate => {
+            panic!("Writing parameter is not allowed to be immediate")
+        }
+        Mode::Relative => number + base,
     }
 }
 
@@ -571,5 +596,38 @@ mod tests {
 
         let output = 4;
         assert_eq!(find_value(position, mode, -2, program), output);
+    }
+
+    #[test]
+    fn test_writing_position_position_mode() {
+        let program = program![3, 3, 99];
+        let mode = &Mode::Position;
+        let position = 1;
+        let base = 0;
+
+        let expected = 3;
+        assert_eq!(writing_position(position, mode, base, &program), expected)
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_writing_position_immediate_mode() {
+        let program = program![103, 0, 99];
+        let mode = &Mode::Immediate;
+        let position = 1;
+        let base = 0;
+
+        writing_position(position, mode, base, &program);
+    }
+
+    #[test]
+    fn test_writing_position_relative_mode() {
+        let program = program![203, 0, 99];
+        let mode = &Mode::Relative;
+        let position = 1;
+        let base = 3;
+
+        let expected = 3;
+        assert_eq!(writing_position(position, mode, base, &program), expected)
     }
 }
