@@ -64,10 +64,17 @@
 /// report no malfunctioning opcodes when run in test mode; it should only
 /// output a single value, the BOOST keycode. What BOOST keycode does it
 /// produce?
+use intcode;
 
 const INPUT: &str = include_str!("../input/day_09.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let boost_program = intcode::load(INPUT);
+    let (_, _, test_outputs) = intcode::start(boost_program.clone(), vec![1]);
+    let keycode = test_outputs[0];
+
+    println!(
+        "Running the BOOST program in test produces the keycode: {}",
+        keycode
+    );
 }
