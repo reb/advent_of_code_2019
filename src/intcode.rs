@@ -152,11 +152,12 @@ fn extract_modes(mut instruction: i64) -> (Vec<Mode>, i64) {
     (modes, opcode)
 }
 
-fn find_value(number: i64, mode: &Mode, base: usize, program: &Program) -> i64 {
+fn find_value(position: i64, mode: &Mode, base: i64, program: &Program) -> i64 {
+    let number = program[&position];
     match mode {
-        Mode::Position => program[number as usize],
+        Mode::Position => program[&number],
         Mode::Immediate => number,
-        Mode::Relative => program[(base as i64 + number) as usize],
+        Mode::Relative => program[&(base + number)],
     }
 }
 
@@ -509,21 +510,31 @@ mod tests {
 
     #[test]
     fn test_find_value_position_mode() {
-        let program = &vec![1002, 4, 3, 4, 33];
+        let program = &program![1002, 4, 3, 4, 33];
         let mode = &Mode::Position;
-        let number = 4;
+        let position = 1;
 
         let output = 33;
-        assert_eq!(find_value(number, mode, 0, program), output);
+        assert_eq!(find_value(position, mode, 0, program), output);
     }
 
     #[test]
     fn test_find_value_immediate_mode() {
-        let program = &vec![1002, 4, 3, 4, 33];
+        let program = &program![1002, 4, 3, 4, 33];
         let mode = &Mode::Immediate;
-        let number = 3;
+        let position = 2;
 
         let output = 3;
-        assert_eq!(find_value(number, mode, 0, program), output);
+        assert_eq!(find_value(position, mode, 0, program), output);
+    }
+
+    #[test]
+    fn test_find_value_relative_mode() {
+        let program = &program![2002, 4, 3, 4, 33];
+        let mode = &Mode::Relative;
+        let position = 2;
+
+        let output = 4;
+        assert_eq!(find_value(position, mode, -2, program), output);
     }
 }
