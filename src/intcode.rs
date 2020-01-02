@@ -10,9 +10,9 @@ pub enum ExitStatus {
     WaitingForInput(usize),
 }
 
-pub type Program = Vec<i32>;
-pub type Inputs = Vec<i32>;
-pub type Outputs = Vec<i32>;
+pub type Program = Vec<i64>;
+pub type Inputs = Vec<i64>;
+pub type Outputs = Vec<i64>;
 
 pub fn start(
     program: Program,
@@ -121,7 +121,7 @@ fn execute(
     (program, ExitStatus::Finished, outputs)
 }
 
-fn extract_modes(mut instruction: i32) -> (Vec<Mode>, i32) {
+fn extract_modes(mut instruction: i64) -> (Vec<Mode>, i64) {
     let opcode = instruction % 100;
     instruction /= 100;
 
@@ -138,7 +138,7 @@ fn extract_modes(mut instruction: i32) -> (Vec<Mode>, i32) {
     (modes, opcode)
 }
 
-fn find_value(number: i32, mode: &Mode, program: &Program) -> i32 {
+fn find_value(number: i64, mode: &Mode, program: &Program) -> i64 {
     match mode {
         Mode::Position => program[number as usize],
         Mode::Immediate => number,

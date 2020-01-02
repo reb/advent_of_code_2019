@@ -155,9 +155,9 @@ pub fn run() {
     );
 }
 
-fn max_signal<I>(amplifier: &intcode::Program, possible_settings: I) -> i32
+fn max_signal<I>(amplifier: &intcode::Program, possible_settings: I) -> i64
 where
-    I: Itertools<Item = i32>,
+    I: Itertools<Item = i64>,
     I::Item: std::clone::Clone,
 {
     possible_settings
@@ -169,8 +169,8 @@ where
 
 fn run_amplifiers(
     amplifier: &intcode::Program,
-    phase_sequence: &Vec<i32>,
-) -> i32 {
+    phase_sequence: &Vec<i64>,
+) -> i64 {
     // initialize phase settings
     let mut programs = Vec::new();
     for &phase_setting in phase_sequence {
