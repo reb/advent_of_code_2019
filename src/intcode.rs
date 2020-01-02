@@ -47,7 +47,9 @@ fn execute(
         let parameters = &program[position + 1..];
 
         match (opcode, parameters) {
-            (99, _) => break,
+            (99, _) => {
+                return (program, ExitStatus::Finished, outputs);
+            }
             (1, &[first, second, write, ..]) => {
                 program[write as usize] =
                     find_value(first, &(modes[0]), &program)
@@ -115,10 +117,11 @@ fn execute(
                 program[write as usize] = value_to_write;
                 position += 4;
             }
-            invalid => panic!("Unknown instruction: {:?}", invalid),
+            invalid => {
+                panic!("Unknown instruction: {:?}", invalid);
+            }
         }
     }
-    (program, ExitStatus::Finished, outputs)
 }
 
 fn extract_modes(mut instruction: i64) -> (Vec<Mode>, i64) {
