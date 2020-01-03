@@ -126,7 +126,7 @@
 ///
 /// Find the best location for a new monitoring station. How many other
 /// asteroids can be detected from that location?
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 const INPUT: &str = include_str!("../input/day_10.txt");
 
@@ -135,6 +135,10 @@ type Point = (i32, i32);
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u8> {
+    HashMap::new()
 }
 
 fn load_asteroids(input: &str) -> HashSet<Point> {
@@ -182,5 +186,52 @@ mod tests {
         .collect();
 
         assert_eq!(load_asteroids(input), output);
+    }
+
+    #[test]
+    fn test_count_visible() {
+        // .#..#
+        // .....
+        // #####
+        // ....#
+        // ...##
+        let input = [
+            (1, 0),
+            (4, 0),
+            (0, 2),
+            (1, 2),
+            (2, 2),
+            (3, 2),
+            (4, 2),
+            (4, 3),
+            (3, 4),
+            (4, 4),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        // .7..7
+        // .....
+        // 67775
+        // ....7
+        // ...87
+        let output = [
+            ((1, 0), 7),
+            ((4, 0), 7),
+            ((0, 2), 6),
+            ((1, 2), 7),
+            ((2, 2), 7),
+            ((3, 2), 7),
+            ((4, 2), 5),
+            ((4, 3), 7),
+            ((3, 4), 8),
+            ((4, 4), 7),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(count_visible(&input), output);
     }
 }
