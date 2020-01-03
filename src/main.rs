@@ -7,6 +7,7 @@ extern crate itertools;
 #[macro_use(s)]
 #[cfg_attr(test, macro_use(array))]
 extern crate ndarray;
+extern crate num;
 extern crate petgraph;
 
 use std::collections::HashMap;

@@ -127,6 +127,7 @@
 /// Find the best location for a new monitoring station. How many other
 /// asteroids can be detected from that location?
 use itertools::Itertools;
+use num::integer::gcd;
 use std::collections::{HashMap, HashSet};
 
 const INPUT: &str = include_str!("../input/day_10.txt");
@@ -143,8 +144,16 @@ fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u8> {
     HashMap::new()
 }
 
-fn find_fraction(station: Point, asteroid: Point) -> Fraction {
-    (0, 0)
+fn find_fraction(station: &Point, asteroid: &Point) -> Fraction {
+    let (station_x, station_y) = station;
+    let (asteroid_x, asteroid_y) = asteroid;
+
+    let difference_x = asteroid_x - station_x;
+    let difference_y = asteroid_y - station_y;
+
+    let gcd = gcd(difference_x, difference_y);
+
+    (difference_x / gcd, difference_y / gcd)
 }
 
 fn load_asteroids(input: &str) -> HashSet<Point> {
@@ -248,7 +257,7 @@ mod tests {
 
         let fraction = (1, 1);
 
-        assert_eq!(find_fraction(station, asteroid), fraction);
+        assert_eq!(find_fraction(&station, &asteroid), fraction);
     }
 
     #[test]
@@ -258,6 +267,6 @@ mod tests {
 
         let fraction = (-3, 1);
 
-        assert_eq!(find_fraction(station, asteroid), fraction);
+        assert_eq!(find_fraction(&station, &asteroid), fraction);
     }
 }
