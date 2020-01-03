@@ -126,6 +126,7 @@
 ///
 /// Find the best location for a new monitoring station. How many other
 /// asteroids can be detected from that location?
+use std::collections::HashSet;
 
 const INPUT: &str = include_str!("../input/day_10.txt");
 
@@ -136,7 +137,7 @@ pub fn run() {
     unimplemented!();
 }
 
-fn load_asteroids(input: &str) -> Vec<Point> {
+fn load_asteroids(input: &str) -> HashSet<Point> {
     input
         .lines()
         .enumerate()
@@ -156,7 +157,7 @@ mod tests {
     #[test]
     fn test_load_asteroids_simple() {
         let input = ".#\n#.";
-        let output = vec![(1, 0), (0, 1)];
+        let output = [(1, 0), (0, 1)].iter().cloned().collect();
 
         assert_eq!(load_asteroids(input), output);
     }
