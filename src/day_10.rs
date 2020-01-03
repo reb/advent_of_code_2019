@@ -161,4 +161,26 @@ mod tests {
 
         assert_eq!(load_asteroids(input), output);
     }
+
+    #[test]
+    fn test_load_asteroids_bigger() {
+        let input = ".#..#\n.....\n#####\n....#\n...##";
+        let output = [
+            (1, 0),
+            (4, 0),
+            (0, 2),
+            (1, 2),
+            (2, 2),
+            (3, 2),
+            (4, 2),
+            (4, 3),
+            (3, 4),
+            (4, 4),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        assert_eq!(load_asteroids(input), output);
+    }
 }
