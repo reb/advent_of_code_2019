@@ -129,7 +129,26 @@
 
 const INPUT: &str = include_str!("../input/day_10.txt");
 
+type Point = (i32, i32);
+
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+fn load_asteroids(input: &str) -> Vec<Point> {
+    Vec::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_load_asteroids() {
+        let input = ".#\n#.";
+        let output = vec![(1, 0), (0, 1)];
+
+        assert_eq!(load_asteroids(input), output);
+    }
 }
