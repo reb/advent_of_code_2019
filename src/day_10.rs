@@ -146,7 +146,7 @@ pub fn run() {
     );
 }
 
-fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u8> {
+fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u32> {
     let mut visible_count = HashMap::new();
     let mut found_fractions: HashMap<Point, HashSet<Fraction>> = HashMap::new();
     for permutation in asteroids.iter().permutations(2) {
