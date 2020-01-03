@@ -130,7 +130,7 @@ use std::collections::HashSet;
 
 const INPUT: &str = include_str!("../input/day_10.txt");
 
-type Point = (usize, usize);
+type Point = (i32, i32);
 
 pub fn run() {
     println!("Not implemented yet");
@@ -143,7 +143,7 @@ fn load_asteroids(input: &str) -> HashSet<Point> {
         .enumerate()
         .flat_map(|(y, line)| {
             line.chars().enumerate().filter_map(move |(x, c)| match c {
-                '#' => Some((x, y)),
+                '#' => Some((x as i32, y as i32)),
                 _ => None,
             })
         })
