@@ -136,8 +136,14 @@ type Point = (i32, i32);
 type Fraction = (i32, i32);
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let asteroids = load_asteroids(INPUT);
+
+    let visible = count_visible(&asteroids);
+    let maximum_visible = visible.values().max().unwrap();
+    println!(
+        "The amount of asteroids to be detected from the best location is: {}",
+        maximum_visible
+    );
 }
 
 fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u8> {
