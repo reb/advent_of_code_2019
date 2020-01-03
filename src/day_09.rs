@@ -93,4 +93,11 @@ pub fn run() {
         "Running the BOOST program in test produces the keycode: {}",
         keycode
     );
+
+    let (_, _, outputs) = intcode::start(boost_program.clone(), vec![2]);
+    let coordinates = outputs[0];
+    println!(
+        "In sensor boost mode it produces the coordinates: {}",
+        coordinates
+    );
 }
