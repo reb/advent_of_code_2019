@@ -141,7 +141,23 @@ pub fn run() {
 }
 
 fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u8> {
-    HashMap::new()
+    let mut visible_count = HashMap::new();
+    let mut found_fractions: HashMap<Point, HashSet<Fraction>> = HashMap::new();
+    for permutation in asteroids.iter().permutations(2) {
+        match permutation[..] {
+            [station, asteroid] => {
+                let new_fraction = find_fraction(station, asteroid);
+                let existing_fractions = found_fractions
+                    .entry(station.clone())
+                    .or_insert(HashSet::new());
+                if existing_fractions.insert(new_fraction) {
+                    *visible_count.entry(station.clone()).or_insert(0) += 1
+                }
+            }
+            _ => panic!("Found an invalid permutation"),
+        };
+    }
+    visible_count
 }
 
 fn find_fraction(station: &Point, asteroid: &Point) -> Fraction {
