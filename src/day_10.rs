@@ -129,7 +129,7 @@
 
 const INPUT: &str = include_str!("../input/day_10.txt");
 
-type Point = (i32, i32);
+type Point = (usize, usize);
 
 pub fn run() {
     println!("Not implemented yet");
@@ -137,7 +137,16 @@ pub fn run() {
 }
 
 fn load_asteroids(input: &str) -> Vec<Point> {
-    Vec::new()
+    input
+        .lines()
+        .enumerate()
+        .flat_map(|(y, line)| {
+            line.chars().enumerate().filter_map(move |(x, c)| match c {
+                '#' => Some((x, y)),
+                _ => None,
+            })
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -145,7 +154,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_load_asteroids() {
+    fn test_load_asteroids_simple() {
         let input = ".#\n#.";
         let output = vec![(1, 0), (0, 1)];
 
