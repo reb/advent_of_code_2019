@@ -226,6 +226,10 @@ struct Fraction {
 }
 
 impl Fraction {
+    fn new(top: i32, bottom: i32) -> Fraction {
+        Fraction { top, bottom }
+    }
+
     fn between(a: &Point, b: &Point) -> Fraction {
         let (a_x, a_y) = a;
         let (b_x, b_y) = b;
@@ -235,7 +239,7 @@ impl Fraction {
 
         let gcd = gcd(difference_x, difference_y);
 
-        Fraction { top: difference_x / gcd, bottom: difference_y / gcd }
+        Fraction::new(difference_x / gcd, difference_y / gcd)
     }
 }
 
@@ -349,110 +353,110 @@ mod tests {
         assert_eq!(
             actual_output[&(1, 0)],
             set![
-                Fraction { top: 1, bottom: 0 },
-                Fraction { top: -1, bottom: 2 },
-                Fraction { top: 0, bottom: 1 },
-                Fraction { top: 1, bottom: 2 },
-                Fraction { top: 1, bottom: 1 },
-                Fraction { top: 3, bottom: 2 },
-                Fraction { top: 3, bottom: 4 },
+                Fraction::new(1, 0),
+                Fraction::new(-1, 2),
+                Fraction::new(0, 1),
+                Fraction::new(1, 2),
+                Fraction::new(1, 1),
+                Fraction::new(3, 2),
+                Fraction::new(3, 4),
             ]
         );
         assert_eq!(
             actual_output[&(4, 0)],
             set![
-                Fraction { top: -1, bottom: 0 },
-                Fraction { top: -2, bottom: 1 },
-                Fraction { top: -3, bottom: 2 },
-                Fraction { top: -1, bottom: 1 },
-                Fraction { top: -1, bottom: 2 },
-                Fraction { top: 0, bottom: 1 },
-                Fraction { top: -1, bottom: 4 },
+                Fraction::new(-1, 0),
+                Fraction::new(-2, 1),
+                Fraction::new(-3, 2),
+                Fraction::new(-1, 1),
+                Fraction::new(-1, 2),
+                Fraction::new(0, 1),
+                Fraction::new(-1, 4),
             ]
         );
         assert_eq!(
             actual_output[&(0, 2)],
             set![
-                Fraction { top: 1, bottom: -2 },
-                Fraction { top: 2, bottom: -1 },
-                Fraction { top: 1, bottom: 0 },
-                Fraction { top: 4, bottom: 1 },
-                Fraction { top: 3, bottom: 2 },
-                Fraction { top: 2, bottom: 1 },
+                Fraction::new(1, -2),
+                Fraction::new(2, -1),
+                Fraction::new(1, 0),
+                Fraction::new(4, 1),
+                Fraction::new(3, 2),
+                Fraction::new(2, 1),
             ]
         );
         assert_eq!(
             actual_output[&(1, 2)],
             set![
-                Fraction { top: 0, bottom: -1 },
-                Fraction { top: 3, bottom: -2 },
-                Fraction { top: -1, bottom: 0 },
-                Fraction { top: 1, bottom: 0 },
-                Fraction { top: 3, bottom: 1 },
-                Fraction { top: 1, bottom: 1 },
-                Fraction { top: 3, bottom: 2 },
+                Fraction::new(0, -1),
+                Fraction::new(3, -2),
+                Fraction::new(-1, 0),
+                Fraction::new(1, 0),
+                Fraction::new(3, 1),
+                Fraction::new(1, 1),
+                Fraction::new(3, 2),
             ]
         );
         assert_eq!(
             actual_output[&(2, 2)],
             set![
-                Fraction { top: -1, bottom: -2 },
-                Fraction { top: 1, bottom: -1 },
-                Fraction { top: -1, bottom: 0 },
-                Fraction { top: 1, bottom: 0 },
-                Fraction { top: 2, bottom: 1 },
-                Fraction { top: 1, bottom: 2 },
-                Fraction { top: 1, bottom: 1 },
+                Fraction::new(-1, -2),
+                Fraction::new(1, -1),
+                Fraction::new(-1, 0),
+                Fraction::new(1, 0),
+                Fraction::new(2, 1),
+                Fraction::new(1, 2),
+                Fraction::new(1, 1),
             ]
         );
 
         assert_eq!(
             actual_output[&(3, 2)],
             set![
-                Fraction { top: -1, bottom: -1 },
-                Fraction { top: 1, bottom: -2 },
-                Fraction { top: -1, bottom: 0 },
-                Fraction { top: 1, bottom: 0 },
-                Fraction { top: 1, bottom: 1 },
-                Fraction { top: 0, bottom: 1 },
-                Fraction { top: 1, bottom: 2 },
+                Fraction::new(-1, -1),
+                Fraction::new(1, -2),
+                Fraction::new(-1, 0),
+                Fraction::new(1, 0),
+                Fraction::new(1, 1),
+                Fraction::new(0, 1),
+                Fraction::new(1, 2),
             ]
         );
         assert_eq!(
             actual_output[&(4, 2)],
             set![
-                Fraction { top: -3, bottom: -2 },
-                Fraction { top: 0, bottom: -1 },
-                Fraction { top: -1, bottom: 0 },
-                Fraction { top: 0, bottom: 1 },
-                Fraction { top: -1, bottom: 2 },
+                Fraction::new(-3, -2),
+                Fraction::new(0, -1),
+                Fraction::new(-1, 0),
+                Fraction::new(0, 1),
+                Fraction::new(-1, 2),
             ]
         );
         assert_eq!(
             actual_output[&(4, 3)],
             set![
-                Fraction { top: -1, bottom: -1 },
-                Fraction { top: 0, bottom: -1 },
-                Fraction { top: -4, bottom: -1 },
-                Fraction { top: -3, bottom: -1 },
-                Fraction { top: -2, bottom: -1 },
-                Fraction { top: -1, bottom: -1 },
-                Fraction { top: 0, bottom: -1 },
-                Fraction { top: -1, bottom: 1 },
-                Fraction { top: 0, bottom: 1 },
+                Fraction::new(-1, -1),
+                Fraction::new(0, -1),
+                Fraction::new(-4, -1),
+                Fraction::new(-3, -1),
+                Fraction::new(-2, -1),
+                Fraction::new(-1, -1),
+                Fraction::new(0, -1),
+                Fraction::new(-1, 1),
+                Fraction::new(0, 1),
             ]
         );
         assert_eq!(
             actual_output[&(4, 4)],
             set![
-                Fraction { top: -3, bottom: -4 },
-                Fraction { top: 0, bottom: -1 },
-                Fraction { top: -2, bottom: -1 },
-                Fraction { top: -3, bottom: -2 },
-                Fraction { top: -1, bottom: -1 },
-                Fraction { top: -1, bottom: -2 },
-                Fraction { top: 0, bottom: -1 },
-                Fraction { top: -1, bottom: 0 },
+                Fraction::new(-3, -4),
+                Fraction::new(0, -1),
+                Fraction::new(-2, -1),
+                Fraction::new(-3, -2),
+                Fraction::new(-1, -1),
+                Fraction::new(-1, -2),
+                Fraction::new(0, -1),
+                Fraction::new(-1, 0),
             ]
         );
     }
@@ -462,7 +466,7 @@ mod tests {
         let station = (0, 0);
         let asteroid = (2, 2);
 
-        let fraction = Fraction { top: 1, bottom: 1 };
+        let fraction = Fraction::new(1, 1);
 
         assert_eq!(Fraction::between(&station, &asteroid), fraction);
     }
@@ -472,7 +476,7 @@ mod tests {
         let station = (12, 0);
         let asteroid = (0, 4);
 
-        let fraction = Fraction { top: -3, bottom: 1 };
+        let fraction = Fraction::new(-3, 1);
 
         assert_eq!(Fraction::between(&station, &asteroid), fraction);
     }
