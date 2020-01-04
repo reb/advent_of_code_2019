@@ -224,31 +224,33 @@ pub fn run() {
     let asteroids = load_asteroids(INPUT);
 
     let visible = count_visible(&asteroids);
-    let maximum_visible = visible.values().max().unwrap();
+    let maximum_visible = visible
+        .values()
+        .map(|fractions| fractions.len())
+        .max()
+        .unwrap();
     println!(
         "The amount of asteroids to be detected from the best location is: {}",
         maximum_visible
     );
 }
 
-fn count_visible(asteroids: &HashSet<Point>) -> HashMap<Point, u32> {
-    let mut visible_count = HashMap::new();
+fn count_visible(
+    asteroids: &HashSet<Point>,
+) -> HashMap<Point, HashSet<Fraction>> {
     let mut found_fractions: HashMap<Point, HashSet<Fraction>> = HashMap::new();
     for permutation in asteroids.iter().permutations(2) {
         match permutation[..] {
             [station, asteroid] => {
                 let new_fraction = find_fraction(station, asteroid);
-                let existing_fractions = found_fractions
-                    .entry(station.clone())
-                    .or_insert(HashSet::new());
-                if existing_fractions.insert(new_fraction) {
-                    *visible_count.entry(station.clone()).or_insert(0) += 1
-                }
+                let existing_fractions =
+                    found_fractions.entry(*station).or_insert(HashSet::new());
+                existing_fractions.insert(new_fraction);
             }
             _ => panic!("Found an invalid permutation"),
         };
     }
-    visible_count
+    found_fractions
 }
 
 fn find_fraction(station: &Point, asteroid: &Point) -> Fraction {
@@ -338,28 +340,63 @@ mod tests {
             (4, 4),
         ];
 
-        // .7..7
-        // .....
-        // 67775
-        // ....7
-        // ...87
-        let output = [
-            ((1, 0), 7),
-            ((4, 0), 7),
-            ((0, 2), 6),
-            ((1, 2), 7),
-            ((2, 2), 7),
-            ((3, 2), 7),
-            ((4, 2), 5),
-            ((4, 3), 7),
-            ((3, 4), 8),
-            ((4, 4), 7),
-        ]
-        .iter()
-        .cloned()
-        .collect();
-
-        assert_eq!(count_visible(&input), output);
+        let actual_output = count_visible(&input);
+        // see if all fraction were found properly
+        assert_eq!(
+            actual_output[&(1, 0)],
+            set![(1, 0), (-1, 2), (0, 1), (1, 2), (1, 1), (3, 2), (3, 4)]
+        );
+        assert_eq!(
+            actual_output[&(4, 0)],
+            set![(-1, 0), (-2, 1), (-3, 2), (-1, 1), (-1, 2), (0, 1), (-1, 4),]
+        );
+        assert_eq!(
+            actual_output[&(0, 2)],
+            set![(1, -2), (2, -1), (1, 0), (4, 1), (3, 2), (2, 1)]
+        );
+        assert_eq!(
+            actual_output[&(1, 2)],
+            set![(0, -1), (3, -2), (-1, 0), (1, 0), (3, 1), (1, 1), (3, 2)]
+        );
+        assert_eq!(
+            actual_output[&(2, 2)],
+            set![(-1, -2), (1, -1), (-1, 0), (1, 0), (2, 1), (1, 2), (1, 1)]
+        );
+        assert_eq!(
+            actual_output[&(3, 2)],
+            set![(-1, -1), (1, -2), (-1, 0), (1, 0), (1, 1), (0, 1), (1, 2)]
+        );
+        assert_eq!(
+            actual_output[&(4, 2)],
+            set![(-3, -2), (0, -1), (-1, 0), (0, 1), (-1, 2)]
+        );
+        assert_eq!(
+            actual_output[&(4, 3)],
+            set![
+                (-1, -1),
+                (0, -1),
+                (-4, -1),
+                (-3, -1),
+                (-2, -1),
+                (-1, -1),
+                (0, -1),
+                (-1, 1),
+                (0, 1)
+            ]
+        );
+        assert_eq!(
+            actual_output[&(4, 4)],
+            set![
+                (-3, -4),
+                (0, -1),
+                (-2, -1),
+                (-3, -2),
+                (-1, -1),
+                (-1, -2),
+                (0, -1),
+                (-1, 0),
+            ]
+        );
     }
 
     #[test]
