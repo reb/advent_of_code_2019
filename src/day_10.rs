@@ -279,11 +279,22 @@ fn load_asteroids(input: &str) -> HashSet<Point> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    macro_rules! set {
+        ( $( $x:expr ),* $(,)? ) => {
+            {
+                let mut temp_set = HashSet::new();
+                $(
+                    temp_set.insert($x);
+                )*
+                temp_set
+            }
+        };
+    }
 
     #[test]
     fn test_load_asteroids_simple() {
         let input = ".#\n#.";
-        let output = [(1, 0), (0, 1)].iter().cloned().collect();
+        let output = set![(1, 0), (0, 1)];
 
         assert_eq!(load_asteroids(input), output);
     }
@@ -291,7 +302,7 @@ mod tests {
     #[test]
     fn test_load_asteroids_bigger() {
         let input = ".#..#\n.....\n#####\n....#\n...##";
-        let output = [
+        let output = set![
             (1, 0),
             (4, 0),
             (0, 2),
@@ -302,10 +313,7 @@ mod tests {
             (4, 3),
             (3, 4),
             (4, 4),
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        ];
 
         assert_eq!(load_asteroids(input), output);
     }
@@ -317,7 +325,7 @@ mod tests {
         // #####
         // ....#
         // ...##
-        let input = [
+        let input = set![
             (1, 0),
             (4, 0),
             (0, 2),
@@ -328,10 +336,7 @@ mod tests {
             (4, 3),
             (3, 4),
             (4, 4),
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        ];
 
         // .7..7
         // .....
