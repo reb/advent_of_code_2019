@@ -218,17 +218,33 @@ use std::collections::{HashMap, HashSet};
 const INPUT: &str = include_str!("../input/day_10.txt");
 
 type Point = (i32, i32);
-type Fraction = (i32, i32);
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct Fraction {
+    top: i32,
+    bottom: i32,
+}
+
+impl Fraction {
+    fn between(a: &Point, b: &Point) -> Fraction {
+        let (a_x, a_y) = a;
+        let (b_x, b_y) = b;
+
+        let difference_x = b_x - a_x;
+        let difference_y = b_y - a_y;
+
+        let gcd = gcd(difference_x, difference_y);
+
+        Fraction { top: difference_x / gcd, bottom: difference_y / gcd }
+    }
+}
 
 pub fn run() {
     let asteroids = load_asteroids(INPUT);
 
     let visible = count_visible(&asteroids);
-    let maximum_visible = visible
-        .values()
-        .map(|fractions| fractions.len())
-        .max()
-        .unwrap();
+    let maximum_visible =
+        visible.values().map(|fractions| fractions.len()).max().unwrap();
     println!(
         "The amount of asteroids to be detected from the best location is: {}",
         maximum_visible
@@ -242,7 +258,7 @@ fn count_visible(
     for permutation in asteroids.iter().permutations(2) {
         match permutation[..] {
             [station, asteroid] => {
-                let new_fraction = find_fraction(station, asteroid);
+                let new_fraction = Fraction::between(station, asteroid);
                 let existing_fractions =
                     found_fractions.entry(*station).or_insert(HashSet::new());
                 existing_fractions.insert(new_fraction);
@@ -251,18 +267,6 @@ fn count_visible(
         };
     }
     found_fractions
-}
-
-fn find_fraction(station: &Point, asteroid: &Point) -> Fraction {
-    let (station_x, station_y) = station;
-    let (asteroid_x, asteroid_y) = asteroid;
-
-    let difference_x = asteroid_x - station_x;
-    let difference_y = asteroid_y - station_y;
-
-    let gcd = gcd(difference_x, difference_y);
-
-    (difference_x / gcd, difference_y / gcd)
 }
 
 fn load_asteroids(input: &str) -> HashSet<Point> {
@@ -344,78 +348,132 @@ mod tests {
         // see if all fraction were found properly
         assert_eq!(
             actual_output[&(1, 0)],
-            set![(1, 0), (-1, 2), (0, 1), (1, 2), (1, 1), (3, 2), (3, 4)]
+            set![
+                Fraction { top: 1, bottom: 0 },
+                Fraction { top: -1, bottom: 2 },
+                Fraction { top: 0, bottom: 1 },
+                Fraction { top: 1, bottom: 2 },
+                Fraction { top: 1, bottom: 1 },
+                Fraction { top: 3, bottom: 2 },
+                Fraction { top: 3, bottom: 4 },
+            ]
         );
         assert_eq!(
             actual_output[&(4, 0)],
-            set![(-1, 0), (-2, 1), (-3, 2), (-1, 1), (-1, 2), (0, 1), (-1, 4),]
+            set![
+                Fraction { top: -1, bottom: 0 },
+                Fraction { top: -2, bottom: 1 },
+                Fraction { top: -3, bottom: 2 },
+                Fraction { top: -1, bottom: 1 },
+                Fraction { top: -1, bottom: 2 },
+                Fraction { top: 0, bottom: 1 },
+                Fraction { top: -1, bottom: 4 },
+            ]
         );
         assert_eq!(
             actual_output[&(0, 2)],
-            set![(1, -2), (2, -1), (1, 0), (4, 1), (3, 2), (2, 1)]
+            set![
+                Fraction { top: 1, bottom: -2 },
+                Fraction { top: 2, bottom: -1 },
+                Fraction { top: 1, bottom: 0 },
+                Fraction { top: 4, bottom: 1 },
+                Fraction { top: 3, bottom: 2 },
+                Fraction { top: 2, bottom: 1 },
+            ]
         );
         assert_eq!(
             actual_output[&(1, 2)],
-            set![(0, -1), (3, -2), (-1, 0), (1, 0), (3, 1), (1, 1), (3, 2)]
+            set![
+                Fraction { top: 0, bottom: -1 },
+                Fraction { top: 3, bottom: -2 },
+                Fraction { top: -1, bottom: 0 },
+                Fraction { top: 1, bottom: 0 },
+                Fraction { top: 3, bottom: 1 },
+                Fraction { top: 1, bottom: 1 },
+                Fraction { top: 3, bottom: 2 },
+            ]
         );
         assert_eq!(
             actual_output[&(2, 2)],
-            set![(-1, -2), (1, -1), (-1, 0), (1, 0), (2, 1), (1, 2), (1, 1)]
+            set![
+                Fraction { top: -1, bottom: -2 },
+                Fraction { top: 1, bottom: -1 },
+                Fraction { top: -1, bottom: 0 },
+                Fraction { top: 1, bottom: 0 },
+                Fraction { top: 2, bottom: 1 },
+                Fraction { top: 1, bottom: 2 },
+                Fraction { top: 1, bottom: 1 },
+            ]
         );
+
         assert_eq!(
             actual_output[&(3, 2)],
-            set![(-1, -1), (1, -2), (-1, 0), (1, 0), (1, 1), (0, 1), (1, 2)]
+            set![
+                Fraction { top: -1, bottom: -1 },
+                Fraction { top: 1, bottom: -2 },
+                Fraction { top: -1, bottom: 0 },
+                Fraction { top: 1, bottom: 0 },
+                Fraction { top: 1, bottom: 1 },
+                Fraction { top: 0, bottom: 1 },
+                Fraction { top: 1, bottom: 2 },
+            ]
         );
         assert_eq!(
             actual_output[&(4, 2)],
-            set![(-3, -2), (0, -1), (-1, 0), (0, 1), (-1, 2)]
+            set![
+                Fraction { top: -3, bottom: -2 },
+                Fraction { top: 0, bottom: -1 },
+                Fraction { top: -1, bottom: 0 },
+                Fraction { top: 0, bottom: 1 },
+                Fraction { top: -1, bottom: 2 },
+            ]
         );
         assert_eq!(
             actual_output[&(4, 3)],
             set![
-                (-1, -1),
-                (0, -1),
-                (-4, -1),
-                (-3, -1),
-                (-2, -1),
-                (-1, -1),
-                (0, -1),
-                (-1, 1),
-                (0, 1)
+                Fraction { top: -1, bottom: -1 },
+                Fraction { top: 0, bottom: -1 },
+                Fraction { top: -4, bottom: -1 },
+                Fraction { top: -3, bottom: -1 },
+                Fraction { top: -2, bottom: -1 },
+                Fraction { top: -1, bottom: -1 },
+                Fraction { top: 0, bottom: -1 },
+                Fraction { top: -1, bottom: 1 },
+                Fraction { top: 0, bottom: 1 },
             ]
         );
         assert_eq!(
             actual_output[&(4, 4)],
             set![
-                (-3, -4),
-                (0, -1),
-                (-2, -1),
-                (-3, -2),
-                (-1, -1),
-                (-1, -2),
-                (0, -1),
-                (-1, 0),
+                Fraction { top: -3, bottom: -4 },
+                Fraction { top: 0, bottom: -1 },
+                Fraction { top: -2, bottom: -1 },
+                Fraction { top: -3, bottom: -2 },
+                Fraction { top: -1, bottom: -1 },
+                Fraction { top: -1, bottom: -2 },
+                Fraction { top: 0, bottom: -1 },
+                Fraction { top: -1, bottom: 0 },
             ]
         );
     }
 
     #[test]
-    fn test_find_fraction_1_1() {
+    fn test_fraction_between_1_1() {
         let station = (0, 0);
         let asteroid = (2, 2);
 
-        let fraction = (1, 1);
+        let fraction = Fraction { top: 1, bottom: 1 };
 
-        assert_eq!(find_fraction(&station, &asteroid), fraction);
+        assert_eq!(Fraction::between(&station, &asteroid), fraction);
     }
 
     #[test]
-    fn test_find_fraction_negative_3_1() {
+    fn test_fraction_between_negative_3_1() {
         let station = (12, 0);
         let asteroid = (0, 4);
 
-        let fraction = (-3, 1);
+        let fraction = Fraction { top: -3, bottom: 1 };
 
-        assert_eq!(find_fraction(&station, &asteroid), fraction);
+        assert_eq!(Fraction::between(&station, &asteroid), fraction);
     }
 }
