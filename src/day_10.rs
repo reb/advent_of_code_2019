@@ -601,7 +601,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fraction_ordering() {
+    fn test_fraction_ordering_full_circle() {
         // ##123
         // #...4
         // #.X.5
@@ -653,6 +653,42 @@ mod tests {
             Fraction::new(-2, -1),
             Fraction::new(-1, -1),
             Fraction::new(-1, -2),
+        ];
+
+        assert_eq!(sorted, expected);
+    }
+
+    #[test]
+    fn test_fraction_ordering_inside_quadrant() {
+        // .24.....
+        // 13.67..9
+        // .5.8....
+        // X.......
+        let sorted: Vec<Fraction> = set![
+            Fraction::between(&(0, 3), &(0, 1)),
+            Fraction::between(&(0, 3), &(2, 0)),
+            Fraction::between(&(0, 3), &(1, 1)),
+            Fraction::between(&(0, 3), &(4, 1)),
+            Fraction::between(&(0, 3), &(3, 1)),
+            Fraction::between(&(0, 3), &(1, 0)),
+            Fraction::between(&(0, 3), &(7, 1)),
+            Fraction::between(&(0, 3), &(3, 2)),
+            Fraction::between(&(0, 3), &(1, 2)),
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let expected = vec![
+            Fraction::between(&(0, 3), &(0, 1)),
+            Fraction::between(&(0, 3), &(1, 0)),
+            Fraction::between(&(0, 3), &(1, 1)),
+            Fraction::between(&(0, 3), &(2, 0)),
+            Fraction::between(&(0, 3), &(1, 2)),
+            Fraction::between(&(0, 3), &(3, 1)),
+            Fraction::between(&(0, 3), &(4, 1)),
+            Fraction::between(&(0, 3), &(3, 2)),
+            Fraction::between(&(0, 3), &(7, 1)),
         ];
 
         assert_eq!(sorted, expected);
