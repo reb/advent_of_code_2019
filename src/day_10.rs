@@ -213,21 +213,58 @@
 /// coordinate? (For example, 8,2 becomes 802.)
 use itertools::Itertools;
 use num::integer::gcd;
-use std::collections::{HashMap, HashSet};
+use std::cmp::Ordering;
+use std::collections::{BTreeSet, HashMap};
+use std::hash::{Hash, Hasher};
 
 const INPUT: &str = include_str!("../input/day_10.txt");
 
 type Point = (i32, i32);
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum Quadrant {
+    TopToRight,
+    RightToBottom,
+    BottomToLeft,
+    LeftToTop,
+    SamePoint,
+}
+
+#[derive(Debug, Clone)]
 struct Fraction {
     top: i32,
     bottom: i32,
+    quadrant: Quadrant,
+    division: f32,
 }
 
 impl Fraction {
     fn new(top: i32, bottom: i32) -> Fraction {
-        Fraction { top, bottom }
+        let quadrant = match (top.cmp(&0), bottom.cmp(&0)) {
+            (Ordering::Equal, Ordering::Less) => Quadrant::TopToRight,
+            (Ordering::Greater, Ordering::Less) => Quadrant::TopToRight,
+            (Ordering::Greater, Ordering::Equal) => Quadrant::RightToBottom,
+            (Ordering::Greater, Ordering::Greater) => Quadrant::RightToBottom,
+            (Ordering::Equal, Ordering::Greater) => Quadrant::BottomToLeft,
+            (Ordering::Less, Ordering::Greater) => Quadrant::BottomToLeft,
+            (Ordering::Less, Ordering::Equal) => Quadrant::LeftToTop,
+            (Ordering::Less, Ordering::Less) => Quadrant::LeftToTop,
+            (Ordering::Equal, Ordering::Equal) => Quadrant::SamePoint,
+        };
+
+        let mut division = match quadrant {
+            Quadrant::TopToRight => top as f32 / bottom as f32,
+            Quadrant::RightToBottom => bottom as f32 / top as f32,
+            Quadrant::BottomToLeft => top as f32 / bottom as f32,
+            Quadrant::LeftToTop => bottom as f32 / top as f32,
+            Quadrant::SamePoint => 0.0,
+        };
+        division = division.abs();
+        if division.is_infinite() {
+            division = 0.0
+        }
+
+        Fraction { top, bottom, quadrant, division }
     }
 
     fn between(a: &Point, b: &Point) -> Fraction {
@@ -240,6 +277,39 @@ impl Fraction {
         let gcd = gcd(difference_x, difference_y);
 
         Fraction::new(difference_x / gcd, difference_y / gcd)
+    }
+}
+
+impl Ord for Fraction {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.quadrant.cmp(&other.quadrant) {
+            Ordering::Equal => self
+                .division
+                .partial_cmp(&other.division)
+                .unwrap_or(Ordering::Equal),
+            other => other,
+        }
+    }
+}
+
+impl PartialOrd for Fraction {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Eq for Fraction {}
+
+impl PartialEq for Fraction {
+    fn eq(&self, other: &Self) -> bool {
+        self.top == other.top && self.bottom == other.bottom
+    }
+}
+
+impl Hash for Fraction {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.top.hash(state);
+        self.bottom.hash(state);
     }
 }
 
@@ -256,15 +326,16 @@ pub fn run() {
 }
 
 fn count_visible(
-    asteroids: &HashSet<Point>,
-) -> HashMap<Point, HashSet<Fraction>> {
-    let mut found_fractions: HashMap<Point, HashSet<Fraction>> = HashMap::new();
+    asteroids: &BTreeSet<Point>,
+) -> HashMap<Point, BTreeSet<Fraction>> {
+    let mut found_fractions: HashMap<Point, BTreeSet<Fraction>> =
+        HashMap::new();
     for permutation in asteroids.iter().permutations(2) {
         match permutation[..] {
             [station, asteroid] => {
                 let new_fraction = Fraction::between(station, asteroid);
                 let existing_fractions =
-                    found_fractions.entry(*station).or_insert(HashSet::new());
+                    found_fractions.entry(*station).or_insert(BTreeSet::new());
                 existing_fractions.insert(new_fraction);
             }
             _ => panic!("Found an invalid permutation"),
@@ -273,7 +344,7 @@ fn count_visible(
     found_fractions
 }
 
-fn load_asteroids(input: &str) -> HashSet<Point> {
+fn load_asteroids(input: &str) -> BTreeSet<Point> {
     input
         .lines()
         .enumerate()
@@ -292,7 +363,7 @@ mod tests {
     macro_rules! set {
         ( $( $x:expr ),* $(,)? ) => {
             {
-                let mut temp_set = HashSet::new();
+                let mut temp_set = BTreeSet::new();
                 $(
                     temp_set.insert($x);
                 )*
@@ -479,5 +550,111 @@ mod tests {
         let fraction = Fraction::new(-3, 1);
 
         assert_eq!(Fraction::between(&station, &asteroid), fraction);
+    }
+
+    #[test]
+    fn test_fraction_quadrant_top_right() {
+        assert_eq!(
+            Fraction::between(&(1, 1), &(1, 0)).quadrant, // 0, -1
+            Quadrant::TopToRight
+        );
+        assert_eq!(
+            Fraction::between(&(1, 1), &(2, 0)).quadrant, // 1, -1
+            Quadrant::TopToRight
+        );
+    }
+
+    #[test]
+    fn test_fraction_quadrant_right_bottom() {
+        assert_eq!(
+            Fraction::between(&(1, 1), &(2, 1)).quadrant, // 1, 0
+            Quadrant::RightToBottom
+        );
+        assert_eq!(
+            Fraction::between(&(1, 1), &(2, 2)).quadrant, // 1, 1
+            Quadrant::RightToBottom
+        );
+    }
+
+    #[test]
+    fn test_fraction_quadrant_bottom_left() {
+        assert_eq!(
+            Fraction::between(&(1, 1), &(1, 2)).quadrant, // 0, 1
+            Quadrant::BottomToLeft
+        );
+        assert_eq!(
+            Fraction::between(&(1, 1), &(0, 2)).quadrant, // -1, 1
+            Quadrant::BottomToLeft
+        );
+    }
+
+    #[test]
+    fn test_fraction_quadrant_left_top() {
+        assert_eq!(
+            Fraction::between(&(1, 1), &(0, 1)).quadrant, // -1, 0
+            Quadrant::LeftToTop
+        );
+        assert_eq!(
+            Fraction::between(&(1, 1), &(0, 0)).quadrant, // -1, -1
+            Quadrant::LeftToTop
+        );
+    }
+
+    #[test]
+    fn test_fraction_ordering() {
+        // ##123
+        // #...4
+        // #.X.5
+        // #...6
+        // ##987
+        //
+        // 67...
+        // 5....
+        // 4.X..
+        // 3....
+        // 21...
+        let sorted: Vec<Fraction> = set![
+            Fraction::between(&(2, 2), &(2, 0)), // 0, -1
+            Fraction::between(&(2, 2), &(0, 4)), // -1, 1
+            Fraction::between(&(2, 2), &(4, 3)), // 2, 1
+            Fraction::between(&(2, 2), &(4, 2)), // 1, 0
+            Fraction::between(&(2, 2), &(2, 0)), // 0, -1
+            Fraction::between(&(2, 2), &(3, 0)), // 1, -2
+            Fraction::between(&(2, 2), &(2, 4)), // 0, 1
+            Fraction::between(&(2, 2), &(1, 4)), // -1, 2
+            Fraction::between(&(2, 2), &(3, 4)), // 1, 2
+            Fraction::between(&(2, 2), &(0, 3)), // -2, 1
+            Fraction::between(&(2, 2), &(0, 2)), // -1, 0
+            Fraction::between(&(2, 2), &(0, 1)), // -2, -1
+            Fraction::between(&(2, 2), &(4, 4)), // 1, 1
+            Fraction::between(&(2, 2), &(4, 0)), // 1, -1
+            Fraction::between(&(2, 2), &(4, 1)), // 2, -1
+            Fraction::between(&(2, 2), &(0, 0)), // -1, -1
+            Fraction::between(&(2, 2), &(1, 0)), // -1, -2
+        ]
+        .iter()
+        .cloned()
+        .collect();
+
+        let expected = vec![
+            Fraction::new(0, -1),
+            Fraction::new(1, -2),
+            Fraction::new(1, -1),
+            Fraction::new(2, -1),
+            Fraction::new(1, 0),
+            Fraction::new(2, 1),
+            Fraction::new(1, 1),
+            Fraction::new(1, 2),
+            Fraction::new(0, 1),
+            Fraction::new(-1, 2),
+            Fraction::new(-1, 1),
+            Fraction::new(-2, 1),
+            Fraction::new(-1, 0),
+            Fraction::new(-2, -1),
+            Fraction::new(-1, -1),
+            Fraction::new(-1, -2),
+        ];
+
+        assert_eq!(sorted, expected);
     }
 }
