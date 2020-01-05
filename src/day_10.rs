@@ -339,15 +339,46 @@ pub fn run() {
     let asteroids = load_asteroids(INPUT);
 
     let fractions_map = calculate_fractions(&asteroids);
-    let maximum_visible = fractions_map
+    let (station_asteroids, maximum_visible) = fractions_map
         .values()
-        .map(|fractions| fractions.into_iter().dedup().count())
-        .max()
+        .map(|fractions| (fractions, fractions.into_iter().dedup().count()))
+        .max_by_key(|&(_, visible)| visible)
         .unwrap();
     println!(
         "The amount of asteroids to be detected from the best location is: {}",
         maximum_visible
     );
+
+    let mut asteroids_left: Vec<&Fraction> = station_asteroids.iter().collect();
+    let mut vaporized_asteroids = 0;
+    'vaporize: while !asteroids_left.is_empty() {
+        let mut same_fraction_asteroids = Vec::new();
+        let mut last_fraction = None;
+        for asteroid_fraction in asteroids_left.iter() {
+            let new_fraction = Some(asteroid_fraction);
+            if new_fraction == last_fraction {
+                // cannot be vaporized, was behind another asteroid
+                same_fraction_asteroids.push(*asteroid_fraction);
+                continue;
+            } else {
+                // vaporize
+                vaporized_asteroids += 1;
+                last_fraction = new_fraction;
+            }
+            if vaporized_asteroids == 200 {
+                // Found our target
+                let asteroid = asteroid_fraction.destination;
+                let (x, y) = asteroid;
+                let location = x * 100 + y;
+                println!(
+                    "Asteroid at {} is the 200th to be vaporized",
+                    location
+                );
+                break 'vaporize;
+            }
+        }
+        asteroids_left = same_fraction_asteroids;
+    }
 }
 
 fn calculate_fractions(
