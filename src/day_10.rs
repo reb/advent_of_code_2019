@@ -236,6 +236,9 @@ struct Fraction {
     bottom: i32,
     quadrant: Quadrant,
     division: f32,
+    distance: i32,
+    origin: Point,
+    destination: Point,
 }
 
 impl Fraction {
@@ -264,7 +267,19 @@ impl Fraction {
             division = 0.0
         }
 
-        Fraction { top, bottom, quadrant, division }
+        let distance = 0;
+        let origin = (0, 0);
+        let destination = (0, 0);
+
+        Fraction {
+            top,
+            bottom,
+            quadrant,
+            division,
+            distance,
+            origin,
+            destination,
+        }
     }
 
     fn between(a: &Point, b: &Point) -> Fraction {
@@ -276,17 +291,26 @@ impl Fraction {
 
         let gcd = gcd(difference_x, difference_y);
 
-        Fraction::new(difference_x / gcd, difference_y / gcd)
+        let mut fraction =
+            Fraction::new(difference_x / gcd, difference_y / gcd);
+        fraction.distance = difference_x.abs() + difference_y.abs();
+        fraction.origin = *a;
+        fraction.destination = *b;
+
+        fraction
     }
 }
 
 impl Ord for Fraction {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.quadrant.cmp(&other.quadrant).then(
-            self.division
-                .partial_cmp(&other.division)
-                .unwrap_or(Ordering::Equal),
-        )
+        self.quadrant
+            .cmp(&other.quadrant)
+            .then(
+                self.division
+                    .partial_cmp(&other.division)
+                    .unwrap_or(Ordering::Equal),
+            )
+            .then(self.distance.cmp(&other.distance))
     }
 }
 
