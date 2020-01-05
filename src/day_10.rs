@@ -214,7 +214,7 @@
 use itertools::Itertools;
 use num::integer::gcd;
 use std::cmp::Ordering;
-use std::collections::{BTreeSet, HashMap};
+use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
 const INPUT: &str = include_str!("../input/day_10.txt");
@@ -282,13 +282,11 @@ impl Fraction {
 
 impl Ord for Fraction {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.quadrant.cmp(&other.quadrant) {
-            Ordering::Equal => self
-                .division
+        self.quadrant.cmp(&other.quadrant).then(
+            self.division
                 .partial_cmp(&other.division)
                 .unwrap_or(Ordering::Equal),
-            other => other,
-        }
+        )
     }
 }
 
@@ -316,35 +314,38 @@ impl Hash for Fraction {
 pub fn run() {
     let asteroids = load_asteroids(INPUT);
 
-    let visible = count_visible(&asteroids);
-    let maximum_visible =
-        visible.values().map(|fractions| fractions.len()).max().unwrap();
+    let fractions_map = calculate_fractions(&asteroids);
+    let maximum_visible = fractions_map
+        .values()
+        .map(|fractions| fractions.into_iter().dedup().count())
+        .max()
+        .unwrap();
     println!(
         "The amount of asteroids to be detected from the best location is: {}",
         maximum_visible
     );
 }
 
-fn count_visible(
-    asteroids: &BTreeSet<Point>,
-) -> HashMap<Point, BTreeSet<Fraction>> {
-    let mut found_fractions: HashMap<Point, BTreeSet<Fraction>> =
-        HashMap::new();
+fn calculate_fractions(
+    asteroids: &Vec<Point>,
+) -> HashMap<Point, Vec<Fraction>> {
+    let mut found_fractions = HashMap::new();
     for permutation in asteroids.iter().permutations(2) {
         match permutation[..] {
             [station, asteroid] => {
                 let new_fraction = Fraction::between(station, asteroid);
                 let existing_fractions =
-                    found_fractions.entry(*station).or_insert(BTreeSet::new());
-                existing_fractions.insert(new_fraction);
+                    found_fractions.entry(*station).or_insert(Vec::new());
+                existing_fractions.push(new_fraction);
             }
             _ => panic!("Found an invalid permutation"),
         };
     }
+    found_fractions.values_mut().for_each(|fractions| fractions.sort());
     found_fractions
 }
 
-fn load_asteroids(input: &str) -> BTreeSet<Point> {
+fn load_asteroids(input: &str) -> Vec<Point> {
     input
         .lines()
         .enumerate()
@@ -360,22 +361,11 @@ fn load_asteroids(input: &str) -> BTreeSet<Point> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    macro_rules! set {
-        ( $( $x:expr ),* $(,)? ) => {
-            {
-                let mut temp_set = BTreeSet::new();
-                $(
-                    temp_set.insert($x);
-                )*
-                temp_set
-            }
-        };
-    }
 
     #[test]
     fn test_load_asteroids_simple() {
         let input = ".#\n#.";
-        let output = set![(1, 0), (0, 1)];
+        let output = vec![(1, 0), (0, 1)];
 
         assert_eq!(load_asteroids(input), output);
     }
@@ -383,7 +373,7 @@ mod tests {
     #[test]
     fn test_load_asteroids_bigger() {
         let input = ".#..#\n.....\n#####\n....#\n...##";
-        let output = set![
+        let output = vec![
             (1, 0),
             (4, 0),
             (0, 2),
@@ -400,14 +390,14 @@ mod tests {
     }
 
     #[test]
-    fn test_count_visible() {
-        // .#..#
+    fn test_calculate_fractions() {
+        // .X..#
         // .....
         // #####
         // ....#
         // ...##
-        let input = set![
-            (1, 0),
+        let input = vec![
+            (1, 0), // X
             (4, 0),
             (0, 2),
             (1, 2),
@@ -419,116 +409,34 @@ mod tests {
             (4, 4),
         ];
 
-        let actual_output = count_visible(&input);
-        // see if all fraction were found properly
-        assert_eq!(
-            actual_output[&(1, 0)],
-            set![
-                Fraction::new(1, 0),
-                Fraction::new(-1, 2),
-                Fraction::new(0, 1),
-                Fraction::new(1, 2),
-                Fraction::new(1, 1),
-                Fraction::new(3, 2),
-                Fraction::new(3, 4),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(4, 0)],
-            set![
-                Fraction::new(-1, 0),
-                Fraction::new(-2, 1),
-                Fraction::new(-3, 2),
-                Fraction::new(-1, 1),
-                Fraction::new(-1, 2),
-                Fraction::new(0, 1),
-                Fraction::new(-1, 4),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(0, 2)],
-            set![
-                Fraction::new(1, -2),
-                Fraction::new(2, -1),
-                Fraction::new(1, 0),
-                Fraction::new(4, 1),
-                Fraction::new(3, 2),
-                Fraction::new(2, 1),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(1, 2)],
-            set![
-                Fraction::new(0, -1),
-                Fraction::new(3, -2),
-                Fraction::new(-1, 0),
-                Fraction::new(1, 0),
-                Fraction::new(3, 1),
-                Fraction::new(1, 1),
-                Fraction::new(3, 2),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(2, 2)],
-            set![
-                Fraction::new(-1, -2),
-                Fraction::new(1, -1),
-                Fraction::new(-1, 0),
-                Fraction::new(1, 0),
-                Fraction::new(2, 1),
-                Fraction::new(1, 2),
-                Fraction::new(1, 1),
-            ]
-        );
+        let mut expected = vec![
+            Fraction::new(1, 0),  // 4, 0
+            Fraction::new(-1, 2), // 0, 2
+            Fraction::new(0, 1),  // 1, 2
+            Fraction::new(1, 2),  // 2, 2
+            Fraction::new(1, 1),  // 3, 2
+            Fraction::new(3, 2),  // 4, 2
+            Fraction::new(1, 1),  // 4, 3
+            Fraction::new(1, 2),  // 3, 4
+            Fraction::new(3, 4),  // 4, 4
+        ];
 
-        assert_eq!(
-            actual_output[&(3, 2)],
-            set![
-                Fraction::new(-1, -1),
-                Fraction::new(1, -2),
-                Fraction::new(-1, 0),
-                Fraction::new(1, 0),
-                Fraction::new(1, 1),
-                Fraction::new(0, 1),
-                Fraction::new(1, 2),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(4, 2)],
-            set![
-                Fraction::new(-3, -2),
-                Fraction::new(0, -1),
-                Fraction::new(-1, 0),
-                Fraction::new(0, 1),
-                Fraction::new(-1, 2),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(4, 3)],
-            set![
-                Fraction::new(-1, -1),
-                Fraction::new(0, -1),
-                Fraction::new(-4, -1),
-                Fraction::new(-3, -1),
-                Fraction::new(-2, -1),
-                Fraction::new(-1, -1),
-                Fraction::new(0, -1),
-                Fraction::new(-1, 1),
-                Fraction::new(0, 1),
-            ]
-        );
-        assert_eq!(
-            actual_output[&(4, 4)],
-            set![
-                Fraction::new(-3, -4),
-                Fraction::new(0, -1),
-                Fraction::new(-2, -1),
-                Fraction::new(-3, -2),
-                Fraction::new(-1, -1),
-                Fraction::new(-1, -2),
-                Fraction::new(0, -1),
-                Fraction::new(-1, 0),
-            ]
+        let mut actual_output = calculate_fractions(&input);
+        let first_point = actual_output.get_mut(&(1, 0)).unwrap();
+
+        // see if the fraction for (1, 0) are all contained in the heap
+        while let Some(fraction) = first_point.pop() {
+            assert_ne!(
+                expected.remove_item(&fraction),
+                None,
+                "Fraction {:?} was not expected in the heap",
+                fraction
+            );
+        }
+        assert!(
+            expected.is_empty(),
+            "Fractions {:?} were not in the heap",
+            expected
         );
     }
 
@@ -613,12 +521,11 @@ mod tests {
         // 4.X..
         // 3....
         // 21...
-        let sorted: Vec<Fraction> = set![
+        let mut sorted = vec![
             Fraction::between(&(2, 2), &(2, 0)), // 0, -1
             Fraction::between(&(2, 2), &(0, 4)), // -1, 1
             Fraction::between(&(2, 2), &(4, 3)), // 2, 1
             Fraction::between(&(2, 2), &(4, 2)), // 1, 0
-            Fraction::between(&(2, 2), &(2, 0)), // 0, -1
             Fraction::between(&(2, 2), &(3, 0)), // 1, -2
             Fraction::between(&(2, 2), &(2, 4)), // 0, 1
             Fraction::between(&(2, 2), &(1, 4)), // -1, 2
@@ -631,10 +538,8 @@ mod tests {
             Fraction::between(&(2, 2), &(4, 1)), // 2, -1
             Fraction::between(&(2, 2), &(0, 0)), // -1, -1
             Fraction::between(&(2, 2), &(1, 0)), // -1, -2
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        ];
+        sorted.sort();
 
         let expected = vec![
             Fraction::new(0, -1),
@@ -659,12 +564,17 @@ mod tests {
     }
 
     #[test]
+    fn test_fraction_equality() {
+        assert_eq!(Fraction::between(&(0, 0), &(1, 1)), Fraction::new(1, 1));
+    }
+
+    #[test]
     fn test_fraction_ordering_inside_quadrant() {
         // .24.....
         // 13.67..9
         // .5.8....
         // X.......
-        let sorted: Vec<Fraction> = set![
+        let mut sorted = vec![
             Fraction::between(&(0, 3), &(0, 1)),
             Fraction::between(&(0, 3), &(2, 0)),
             Fraction::between(&(0, 3), &(1, 1)),
@@ -674,10 +584,8 @@ mod tests {
             Fraction::between(&(0, 3), &(7, 1)),
             Fraction::between(&(0, 3), &(3, 2)),
             Fraction::between(&(0, 3), &(1, 2)),
-        ]
-        .iter()
-        .cloned()
-        .collect();
+        ];
+        sorted.sort();
 
         let expected = vec![
             Fraction::between(&(0, 3), &(0, 1)),
