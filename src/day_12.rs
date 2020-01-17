@@ -207,6 +207,7 @@
 ///
 /// What is the total energy in the system after simulating the moons given in
 /// your scan for 1000 steps?
+use regex::Regex;
 
 const INPUT: &str = include_str!("../input/day_12.txt");
 
@@ -230,6 +231,33 @@ pub fn run() {
 
 fn load_moons(input: &str) -> Vec<Moon> {
     Vec::new()
+}
+
+fn convert_to_vector3d(input: &str) -> Option<Vector3D> {
+    lazy_static! {
+        static ref RE: Regex =
+            Regex::new(r"^<x=(-?[0-9]+), y=(-?[0-9]+), z=(-?[0-9]+)>$")
+                .unwrap();
+    }
+    let captures = RE.captures(input);
+    match captures {
+        Some(groups) => match (groups.get(1), groups.get(2), groups.get(3)) {
+            (Some(x), Some(y), Some(z)) => {
+                match (
+                    x.as_str().parse(),
+                    y.as_str().parse(),
+                    z.as_str().parse(),
+                ) {
+                    (Ok(x_int), Ok(y_int), Ok(z_int)) => {
+                        Some(Vector3D { x: x_int, y: y_int, z: z_int })
+                    }
+                    _ => None,
+                }
+            }
+            _ => None,
+        },
+        _ => None,
+    }
 }
 
 #[cfg(test)]
@@ -294,5 +322,13 @@ mod tests {
         ];
 
         assert_eq!(load_moons(input), output);
+    }
+
+    #[test]
+    fn test_convert_to_vector3d() {
+        let input = "<x=-132, y=1000, z=4>";
+        let output = Some(Vector3D { x: -132, y: 1000, z: 4 });
+
+        assert_eq!(convert_to_vector3d(input), output);
     }
 }
