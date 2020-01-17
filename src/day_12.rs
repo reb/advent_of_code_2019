@@ -210,7 +210,89 @@
 
 const INPUT: &str = include_str!("../input/day_12.txt");
 
+#[derive(Debug, Eq, PartialEq)]
+struct Vector3D {
+    x: i32,
+    y: i32,
+    z: i32,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct Moon {
+    position: Vector3D,
+    velocity: Vector3D,
+}
+
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+fn load_moons(input: &str) -> Vec<Moon> {
+    Vec::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_load_moons_1() {
+        /// <x=-1, y=0, z=2>
+        /// <x=2, y=-10, z=-7>
+        /// <x=4, y=-8, z=8>
+        /// <x=3, y=5, z=-1>
+        let input = "<x=-1, y=0, z=2>\n<x=2, y=-10, z=-7>\n<x=4, y=-8, z=8>\n<x=3, y=5, z=-1>";
+
+        let output = vec![
+            Moon {
+                position: Vector3D { x: -1, y: 0, z: 2 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 2, y: -10, z: -7 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 4, y: -8, z: 8 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 3, y: 5, z: -1 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+        ];
+
+        assert_eq!(load_moons(input), output);
+    }
+
+    #[test]
+    fn test_load_moons_2() {
+        /// <x=-8, y=-10, z=0>
+        /// <x=5, y=5, z=10>
+        /// <x=2, y=-7, z=3>
+        /// <x=9, y=-8, z=-3>
+        let input = "<x=-8, y=-10, z=0>\n<x=5, y=5, z=10>\n<x=2, y=-7, z=3>\n<x=9, y=-8, z=-3>";
+
+        let output = vec![
+            Moon {
+                position: Vector3D { x: -8, y: -10, z: 0 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 5, y: 5, z: 10 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 2, y: -7, z: 3 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 9, y: -8, z: -3 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+        ];
+
+        assert_eq!(load_moons(input), output);
+    }
 }
