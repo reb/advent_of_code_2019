@@ -230,7 +230,14 @@ pub fn run() {
 }
 
 fn load_moons(input: &str) -> Vec<Moon> {
-    Vec::new()
+    input
+        .lines()
+        .filter_map(|line| convert_to_vector3d(line))
+        .map(|vector| Moon {
+            position: vector,
+            velocity: Vector3D { x: 0, y: 0, z: 0 },
+        })
+        .collect()
 }
 
 fn convert_to_vector3d(input: &str) -> Option<Vector3D> {
