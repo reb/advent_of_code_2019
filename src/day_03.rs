@@ -100,7 +100,6 @@
 ///
 /// What is the fewest combined steps the wires must take to reach an
 /// intersection?
-
 use regex::Regex;
 use std::collections::HashMap;
 use std::collections::HashSet;
@@ -125,7 +124,7 @@ struct Move {
 #[derive(Debug, Eq, PartialOrd, Ord, Clone)]
 struct Wire {
     number: usize,
-    distance: u32
+    distance: u32,
 }
 
 impl PartialEq for Wire {
@@ -151,25 +150,36 @@ pub fn run() {
         wire_grid = lay_wire(wire_number, moves, wire_grid)
     }
 
-    let closest = wire_grid.iter()
+    let closest = wire_grid
+        .iter()
         .filter(|(_, wires_present)| wires_present.len() == 2)
         .map(|((x, y), _)| x.abs() + y.abs()) // convert to Manhattan distances
         .min()
         .unwrap();
     println!("The Manhattan distance to closest intersection is: {}", closest);
 
-    let fewest_steps = wire_grid.iter()
+    let fewest_steps = wire_grid
+        .iter()
         .filter(|(_, wires_present)| wires_present.len() == 2)
-        .map(|(_, wires)| wires
-             .iter()
-             .map(|wire: &Wire| wire.distance) // extract distances
-             .sum::<u32>()) // sum them
+        .map(|(_, wires)| {
+            wires
+                .iter()
+                .map(|wire: &Wire| wire.distance) // extract distances
+                .sum::<u32>()
+        }) // sum them
         .min()
         .unwrap();
-    println!("The fewest combined steps for an intersection is: {}", fewest_steps);
+    println!(
+        "The fewest combined steps for an intersection is: {}",
+        fewest_steps
+    );
 }
 
-fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid {
+fn lay_wire(
+    wire_number: usize,
+    moves: &Vec<Move>,
+    mut wire_grid: Grid,
+) -> Grid {
     let (mut x, mut y) = (0, 0);
     let mut distance = 0;
 
@@ -184,8 +194,9 @@ fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid 
                 Direction::Down => x -= 1,
                 Direction::Left => y -= 1,
             };
-            let wires_present = wire_grid.entry((x, y)).or_insert(HashSet::new());
-            let wire = Wire {number: wire_number, distance: distance};
+            let wires_present =
+                wire_grid.entry((x, y)).or_insert(HashSet::new());
+            let wire = Wire { number: wire_number, distance: distance };
             (*wires_present).insert(wire);
         }
     }
@@ -193,12 +204,10 @@ fn lay_wire(wire_number: usize, moves: &Vec<Move>, mut wire_grid: Grid) -> Grid 
 }
 
 fn get_input() -> Vec<Vec<Move>> {
-    INPUT.lines()
+    INPUT
+        .lines()
         .map(|line| {
-            line.split(',')
-                .map(|item| convert_to_move(item))
-                .filter_map(|m| m)
-                .collect()
+            line.split(',').filter_map(|item| convert_to_move(item)).collect()
         })
         .collect()
 }
@@ -209,26 +218,24 @@ fn convert_to_move(item: &str) -> Option<Move> {
     }
     let captures = RE.captures(item);
     match captures {
-        Some(groups) => {
-            match (groups.get(1), groups.get(2)) {
-                (Some(direction), Some(steps)) => {
-                    return Some(Move {
-                        direction: match direction.as_str() {
-                            "U" => Direction::Up,
-                            "R" => Direction::Right,
-                            "D" => Direction::Down,
-                            "L" => Direction::Left,
-                            _ => return None,
-                        },
-                        steps: match steps.as_str().parse() {
-                            Ok(number) => number,
-                            Err(_) => return None,
-                        }
-                    });
-                },
-                _ => None,
+        Some(groups) => match (groups.get(1), groups.get(2)) {
+            (Some(direction), Some(steps)) => {
+                return Some(Move {
+                    direction: match direction.as_str() {
+                        "U" => Direction::Up,
+                        "R" => Direction::Right,
+                        "D" => Direction::Down,
+                        "L" => Direction::Left,
+                        _ => return None,
+                    },
+                    steps: match steps.as_str().parse() {
+                        Ok(number) => number,
+                        Err(_) => return None,
+                    },
+                });
             }
-        }
+            _ => None,
+        },
         _ => None,
     }
 }
@@ -287,7 +294,7 @@ mod tests {
         let wire_map = HashMap::new();
 
         let mut wire_present = HashSet::new();
-        wire_present.insert(Wire {number: 0, distance: 0});
+        wire_present.insert(Wire { number: 0, distance: 0 });
         let mut output = HashMap::new();
         output.insert((0, 1), wire_present.clone());
         output.insert((0, 2), wire_present.clone());
@@ -304,17 +311,15 @@ mod tests {
     #[test]
     fn test_lay_wire_on_top_of_other() {
         let wire_number = 1;
-        let moves = vec![
-            Move { direction: Direction::Up, steps: 1 },
-        ];
+        let moves = vec![Move { direction: Direction::Up, steps: 1 }];
         let mut wire_present = HashSet::new();
-        wire_present.insert(Wire {number: 0, distance: 0});
+        wire_present.insert(Wire { number: 0, distance: 0 });
         let mut wire_map = HashMap::new();
         wire_map.insert((1, 0), wire_present);
 
         let mut both_wires = HashSet::new();
-        both_wires.insert(Wire {number: 0, distance: 0});
-        both_wires.insert(Wire {number: 1, distance: 0});
+        both_wires.insert(Wire { number: 0, distance: 0 });
+        both_wires.insert(Wire { number: 1, distance: 0 });
         let mut output = HashMap::new();
         output.insert((1, 0), both_wires);
 
