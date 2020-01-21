@@ -207,18 +207,49 @@
 ///
 /// What is the total energy in the system after simulating the moons given in
 /// your scan for 1000 steps?
+use itertools::Itertools;
 use regex::Regex;
+use std::cmp::Ordering;
+use std::ops::AddAssign;
 
 const INPUT: &str = include_str!("../input/day_12.txt");
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone, Copy)]
 struct Vector3D {
     x: i32,
     y: i32,
     z: i32,
 }
 
-#[derive(Debug, Eq, PartialEq)]
+impl Vector3D {
+    fn get(self, dimension: char) -> i32 {
+        match dimension {
+            'x' => self.x,
+            'y' => self.y,
+            'z' => self.z,
+            _ => panic!("Trying to get unknown dimension"),
+        }
+    }
+
+    fn adjust(&mut self, dimension: char, adjustment: i32) {
+        match dimension {
+            'x' => self.x += adjustment,
+            'y' => self.y += adjustment,
+            'z' => self.z += adjustment,
+            _ => panic!("Trying to adjust unknown dimension"),
+        };
+    }
+}
+
+impl AddAssign for Vector3D {
+    fn add_assign(&mut self, other: Vector3D) {
+        self.x += other.x;
+        self.y += other.y;
+        self.z += other.z;
+    }
+}
+
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Moon {
     position: Vector3D,
     velocity: Vector3D,
@@ -227,6 +258,31 @@ struct Moon {
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+fn step(moons: &mut Vec<Moon>) {
+    // calculate gravity
+    for (a, b) in (0..moons.len()).tuple_combinations() {
+        for &axis in ['x', 'y', 'z'].iter() {
+            match moons[a].position.get(axis).cmp(&moons[b].position.get(axis))
+            {
+                Ordering::Greater => {
+                    moons[a].velocity.adjust(axis, -1);
+                    moons[b].velocity.adjust(axis, 1);
+                }
+                Ordering::Less => {
+                    moons[a].velocity.adjust(axis, 1);
+                    moons[b].velocity.adjust(axis, -1)
+                }
+                Ordering::Equal => {}
+            }
+        }
+    }
+
+    // update positions by applying velocities
+    for moon in moons.iter_mut() {
+        moon.position += moon.velocity;
+    }
 }
 
 fn load_moons(input: &str) -> Vec<Moon> {
@@ -337,5 +393,166 @@ mod tests {
         let output = Some(Vector3D { x: -132, y: 1000, z: 4 });
 
         assert_eq!(convert_to_vector3d(input), output);
+    }
+    #[test]
+    fn test_step_1() {
+        /// After 0 steps:
+        /// pos=<x=-1, y=  0, z= 2>, vel=<x= 0, y= 0, z= 0>
+        /// pos=<x= 2, y=-10, z=-7>, vel=<x= 0, y= 0, z= 0>
+        /// pos=<x= 4, y= -8, z= 8>, vel=<x= 0, y= 0, z= 0>
+        /// pos=<x= 3, y=  5, z=-1>, vel=<x= 0, y= 0, z= 0>
+        let mut input = vec![
+            Moon {
+                position: Vector3D { x: -1, y: 0, z: 2 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 2, y: -10, z: -7 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 4, y: -8, z: 8 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 3, y: 5, z: -1 },
+                velocity: Vector3D { x: 0, y: 0, z: 0 },
+            },
+        ];
+
+        /// After 1 step:
+        /// pos=<x= 2, y=-1, z= 1>, vel=<x= 3, y=-1, z=-1>
+        /// pos=<x= 3, y=-7, z=-4>, vel=<x= 1, y= 3, z= 3>
+        /// pos=<x= 1, y=-7, z= 5>, vel=<x=-3, y= 1, z=-3>
+        /// pos=<x= 2, y= 2, z= 0>, vel=<x=-1, y=-3, z= 1>
+        let output = vec![
+            Moon {
+                position: Vector3D { x: 2, y: -1, z: 1 },
+                velocity: Vector3D { x: 3, y: -1, z: -1 },
+            },
+            Moon {
+                position: Vector3D { x: 3, y: -7, z: -4 },
+                velocity: Vector3D { x: 1, y: 3, z: 3 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -7, z: 5 },
+                velocity: Vector3D { x: -3, y: 1, z: -3 },
+            },
+            Moon {
+                position: Vector3D { x: 2, y: 2, z: 0 },
+                velocity: Vector3D { x: -1, y: -3, z: 1 },
+            },
+        ];
+
+        step(&mut input);
+        assert_eq!(input, output);
+    }
+
+    #[test]
+    fn test_step_2() {
+        /// After 1 step:
+        /// pos=<x= 2, y=-1, z= 1>, vel=<x= 3, y=-1, z=-1>
+        /// pos=<x= 3, y=-7, z=-4>, vel=<x= 1, y= 3, z= 3>
+        /// pos=<x= 1, y=-7, z= 5>, vel=<x=-3, y= 1, z=-3>
+        /// pos=<x= 2, y= 2, z= 0>, vel=<x=-1, y=-3, z= 1>
+        let mut input = vec![
+            Moon {
+                position: Vector3D { x: 2, y: -1, z: 1 },
+                velocity: Vector3D { x: 3, y: -1, z: -1 },
+            },
+            Moon {
+                position: Vector3D { x: 3, y: -7, z: -4 },
+                velocity: Vector3D { x: 1, y: 3, z: 3 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -7, z: 5 },
+                velocity: Vector3D { x: -3, y: 1, z: -3 },
+            },
+            Moon {
+                position: Vector3D { x: 2, y: 2, z: 0 },
+                velocity: Vector3D { x: -1, y: -3, z: 1 },
+            },
+        ];
+
+        /// After 2 steps:
+        /// pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
+        /// pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
+        /// pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
+        /// pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>
+        let output = vec![
+            Moon {
+                position: Vector3D { x: 5, y: -3, z: -1 },
+                velocity: Vector3D { x: 3, y: -2, z: -2 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -2, z: 2 },
+                velocity: Vector3D { x: -2, y: 5, z: 6 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -4, z: -1 },
+                velocity: Vector3D { x: 0, y: 3, z: -6 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -4, z: 2 },
+                velocity: Vector3D { x: -1, y: -6, z: 2 },
+            },
+        ];
+
+        step(&mut input);
+        assert_eq!(input, output);
+    }
+
+    #[test]
+    fn test_step_3() {
+        /// After 2 steps:
+        /// pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
+        /// pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
+        /// pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
+        /// pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>
+        let mut input = vec![
+            Moon {
+                position: Vector3D { x: 5, y: -3, z: -1 },
+                velocity: Vector3D { x: 3, y: -2, z: -2 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -2, z: 2 },
+                velocity: Vector3D { x: -2, y: 5, z: 6 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -4, z: -1 },
+                velocity: Vector3D { x: 0, y: 3, z: -6 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -4, z: 2 },
+                velocity: Vector3D { x: -1, y: -6, z: 2 },
+            },
+        ];
+
+        /// After 3 steps:
+        /// pos=<x= 5, y=-6, z=-1>, vel=<x= 0, y=-3, z= 0>
+        /// pos=<x= 0, y= 0, z= 6>, vel=<x=-1, y= 2, z= 4>
+        /// pos=<x= 2, y= 1, z=-5>, vel=<x= 1, y= 5, z=-4>
+        /// pos=<x= 1, y=-8, z= 2>, vel=<x= 0, y=-4, z= 0>
+        let output = vec![
+            Moon {
+                position: Vector3D { x: 5, y: -6, z: -1 },
+                velocity: Vector3D { x: 0, y: -3, z: 0 },
+            },
+            Moon {
+                position: Vector3D { x: 0, y: 0, z: 6 },
+                velocity: Vector3D { x: -1, y: 2, z: 4 },
+            },
+            Moon {
+                position: Vector3D { x: 2, y: 1, z: -5 },
+                velocity: Vector3D { x: 1, y: 5, z: -4 },
+            },
+            Moon {
+                position: Vector3D { x: 1, y: -8, z: 2 },
+                velocity: Vector3D { x: 0, y: -4, z: 0 },
+            },
+        ];
+
+        step(&mut input);
+        assert_eq!(input, output);
     }
 }
