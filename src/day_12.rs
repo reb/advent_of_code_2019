@@ -266,8 +266,18 @@ impl Moon {
 }
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let mut moons = load_moons(INPUT);
+    for _ in 0..1000 {
+        step(&mut moons);
+    }
+
+    let total_system_energy: i32 =
+        moons.iter().map(|moon| moon.total_energy()).sum();
+
+    println!(
+        "The total energy of the system after 1000 steps is: {}",
+        total_system_energy
+    );
 }
 
 fn step(moons: &mut Vec<Moon>) {
