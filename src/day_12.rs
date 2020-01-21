@@ -239,6 +239,10 @@ impl Vector3D {
             _ => panic!("Trying to adjust unknown dimension"),
         };
     }
+
+    fn energy(self) -> i32 {
+        self.x.abs() + self.y.abs() + self.z.abs()
+    }
 }
 
 impl AddAssign for Vector3D {
@@ -253,6 +257,12 @@ impl AddAssign for Vector3D {
 struct Moon {
     position: Vector3D,
     velocity: Vector3D,
+}
+
+impl Moon {
+    fn total_energy(&self) -> i32 {
+        self.position.energy() + self.velocity.energy()
+    }
 }
 
 pub fn run() {
@@ -554,5 +564,16 @@ mod tests {
 
         step(&mut input);
         assert_eq!(input, output);
+    }
+
+    #[test]
+    fn test_energy() {
+        /// pos=<x=  8, y=-12, z= -9>, vel=<x= -7, y=  3, z=  0>
+        let input = Moon {
+            position: Vector3D { x: 8, y: -12, z: -9 },
+            velocity: Vector3D { x: -7, y: 3, z: 0 },
+        };
+
+        assert_eq!(input.total_energy(), 39);
     }
 }
