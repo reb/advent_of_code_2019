@@ -208,6 +208,7 @@
 /// What is the total energy in the system after simulating the moons given in
 /// your scan for 1000 steps?
 use itertools::Itertools;
+use num::integer::lcm;
 use regex::Regex;
 use std::cmp::Ordering;
 use std::ops::AddAssign;
@@ -266,9 +267,11 @@ impl Moon {
 }
 
 pub fn run() {
-    let mut moons = load_moons(INPUT);
+    let initial_moons = load_moons(INPUT);
+    let mut moons = initial_moons.clone();
+
     for _ in 0..1000 {
-        step(&mut moons);
+        step(&mut moons, vec!['x', 'y', 'z']);
     }
 
     let total_system_energy: i32 =
@@ -278,12 +281,40 @@ pub fn run() {
         "The total energy of the system after 1000 steps is: {}",
         total_system_energy
     );
+
+    // reset to initial state
+    moons = initial_moons.clone();
+
+    let mut periodic_orbits = Vec::new();
+    // split out finding periodic orbits over the 3 axes
+    for &axis in ['x', 'y', 'z'].iter() {
+        let mut steps: u64 = 0;
+        loop {
+            step(&mut moons, vec![axis]);
+            steps += 1;
+            // only compare to the initial state
+            if moons == initial_moons {
+                break;
+            }
+        }
+        periodic_orbits.push(steps);
+    }
+
+    // now find the Lowest Common Multiple of the 3 found orbits
+    let combined_periodic_orbit = periodic_orbits
+        .iter()
+        .fold(1, |combined, periodic_orbit| lcm(combined, *periodic_orbit));
+
+    println!(
+        "It took {} steps to get back to the initial state",
+        combined_periodic_orbit
+    )
 }
 
-fn step(moons: &mut Vec<Moon>) {
+fn step(moons: &mut Vec<Moon>, axes: Vec<char>) {
     // calculate gravity
     for (a, b) in (0..moons.len()).tuple_combinations() {
-        for &axis in ['x', 'y', 'z'].iter() {
+        for &axis in axes.iter() {
             match moons[a].position.get(axis).cmp(&moons[b].position.get(axis))
             {
                 Ordering::Greater => {
@@ -464,7 +495,7 @@ mod tests {
             },
         ];
 
-        step(&mut input);
+        step(&mut input, vec!['x', 'y', 'z']);
         assert_eq!(input, output);
     }
 
@@ -518,7 +549,7 @@ mod tests {
             },
         ];
 
-        step(&mut input);
+        step(&mut input, vec!['x', 'y', 'z']);
         assert_eq!(input, output);
     }
 
@@ -572,7 +603,7 @@ mod tests {
             },
         ];
 
-        step(&mut input);
+        step(&mut input, vec!['x', 'y', 'z']);
         assert_eq!(input, output);
     }
 
