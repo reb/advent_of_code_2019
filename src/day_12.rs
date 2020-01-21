@@ -261,7 +261,7 @@ struct Moon {
 
 impl Moon {
     fn total_energy(&self) -> i32 {
-        self.position.energy() + self.velocity.energy()
+        self.position.energy() * self.velocity.energy()
     }
 }
 
@@ -579,11 +579,12 @@ mod tests {
     #[test]
     fn test_energy() {
         /// pos=<x=  8, y=-12, z= -9>, vel=<x= -7, y=  3, z=  0>
+        /// pot:  8 + 12 +  9 = 29;   kin: 7 +  3 + 0 = 10;   total: 29 * 10 = 290
         let input = Moon {
             position: Vector3D { x: 8, y: -12, z: -9 },
             velocity: Vector3D { x: -7, y: 3, z: 0 },
         };
 
-        assert_eq!(input.total_energy(), 39);
+        assert_eq!(input.total_energy(), 290);
     }
 }
