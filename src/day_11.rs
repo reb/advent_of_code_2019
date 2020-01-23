@@ -167,8 +167,26 @@ impl Robot {
 
 pub fn run() {
     let brain = intcode::load(INPUT);
+
+    let painted_hull = paint_hull(brain.clone(), HashMap::new());
+
+    println!(
+        "The amount of panels painted at least once is: {}",
+        painted_hull.len()
+    );
+    display(&painted_hull);
+
+    // start on a white square
+    let mut white_starting_hull = HashMap::new();
+    white_starting_hull.insert((0, 0), 1);
+    let proper_painted_hull = paint_hull(brain.clone(), white_starting_hull);
+
+    println!("With starting on a white square the robot paints:");
+    display(&proper_painted_hull);
+}
+
+fn paint_hull(brain: intcode::Program, mut hull: Hull) -> Hull {
     let mut robot = Robot::new();
-    let mut hull = HashMap::new();
 
     let (mut program, mut status, mut outputs) =
         intcode::start(brain, Vec::new());
@@ -184,8 +202,25 @@ pub fn run() {
         status = new_status;
         outputs = new_outputs;
     }
+    hull
+}
 
-    println!("The amount of panels painted at least once is: {}", hull.len());
+fn display(hull: &Hull) {
+    let x_min = hull.keys().map(|&(x, _)| x).min().unwrap();
+    let x_max = hull.keys().map(|&(x, _)| x).max().unwrap();
+    let y_min = hull.keys().map(|&(_, y)| y).min().unwrap();
+    let y_max = hull.keys().map(|&(_, y)| y).max().unwrap();
+
+    for y in y_min..=y_max {
+        for x in x_min..=x_max {
+            match *hull.get(&(x, y)).unwrap_or(&0) {
+                0 => print!(" "),
+                1 => print!("\u{2588}"),
+                _ => print!("?"),
+            };
+        }
+        print!("\n");
+    }
 }
 
 #[cfg(test)]
