@@ -98,9 +98,12 @@
 /// Build a new emergency hull painting robot and run the Intcode program on it.
 /// How many panels does it paint at least once?
 use intcode;
+use intcode::ExitStatus::WaitingForInput;
+use itertools::Itertools;
 use num;
 use num_derive::{FromPrimitive, ToPrimitive};
 use std::collections::HashMap;
+use std::mem::discriminant;
 
 const INPUT: &str = include_str!("../input/day_11.txt");
 
@@ -127,13 +130,12 @@ impl Robot {
     }
 
     /// Paint the hull at the current location with the given color
-    fn paint(self, instruction: i64, mut hull: Hull) -> Hull {
-        hull.insert(self.position, instruction);
-        hull
+    fn paint(self, instruction: &i64, hull: &mut Hull) {
+        hull.insert(self.position, *instruction);
     }
 
     /// Execute a turn instruction (turn & move forward)
-    fn turn(&mut self, instruction: i64) {
+    fn turn(&mut self, instruction: &i64) {
         // turn depending on the instruction
         let heading = self.heading as i8;
         self.heading = match instruction {
@@ -164,8 +166,26 @@ impl Robot {
 }
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let brain = intcode::load(INPUT);
+    let mut robot = Robot::new();
+    let mut hull = HashMap::new();
+
+    let (mut program, mut status, mut outputs) =
+        intcode::start(brain, Vec::new());
+    while discriminant(&status) == discriminant(&WaitingForInput(0, 0)) {
+        for (paint_instruction, turn_instruction) in outputs.iter().tuples() {
+            robot.paint(paint_instruction, &mut hull);
+            robot.turn(turn_instruction);
+        }
+        let inputs = vec![robot.read_camera(&hull)];
+        let (new_program, new_status, new_outputs) =
+            intcode::resume(program, status, inputs);
+        program = new_program;
+        status = new_status;
+        outputs = new_outputs;
+    }
+
+    println!("The amount of panels painted at least once is: {}", hull.len());
 }
 
 #[cfg(test)]
@@ -192,26 +212,28 @@ mod tests {
 
     #[test]
     fn test_robot_paint_white() {
-        let hull = HashMap::new();
+        let mut hull = HashMap::new();
         let mut robot = Robot::new();
         robot.position = (2, 0);
 
         let mut expected_hull = HashMap::new();
         expected_hull.insert((2, 0), 1);
 
-        assert_eq!(robot.paint(1, hull), expected_hull);
+        robot.paint(&1, &mut hull);
+        assert_eq!(hull, expected_hull);
     }
 
     #[test]
     fn test_robot_paint_black() {
-        let hull = HashMap::new();
+        let mut hull = HashMap::new();
         let mut robot = Robot::new();
         robot.position = (-1, -2);
 
         let mut expected_hull = HashMap::new();
         expected_hull.insert((-1, -2), 0);
 
-        assert_eq!(robot.paint(0, hull), expected_hull);
+        robot.paint(&0, &mut hull);
+        assert_eq!(hull, expected_hull);
     }
 
     #[test]
@@ -220,7 +242,7 @@ mod tests {
         robot.position = (1, 1);
         robot.heading = Direction::Up;
 
-        robot.turn(0);
+        robot.turn(&0);
 
         assert_eq!(robot.heading, Direction::Left);
         assert_eq!(robot.position, (0, 1));
@@ -232,7 +254,7 @@ mod tests {
         robot.position = (0, -2);
         robot.heading = Direction::Right;
 
-        robot.turn(1);
+        robot.turn(&1);
 
         assert_eq!(robot.heading, Direction::Down);
         assert_eq!(robot.position, (0, -1));
