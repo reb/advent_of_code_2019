@@ -1,4 +1,3 @@
-use intcode;
 /// --- Day 11: Space Police ---
 ///
 /// On the way to Jupiter, you're pulled over by the Space Police.
@@ -98,10 +97,144 @@ use intcode;
 ///
 /// Build a new emergency hull painting robot and run the Intcode program on it.
 /// How many panels does it paint at least once?
+use intcode;
+use num;
+use num_derive::{FromPrimitive, ToPrimitive};
+use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_11.txt");
+
+type Point = (i32, i32);
+type Hull = HashMap<Point, i64>;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive)]
+enum Direction {
+    Up,
+    Right,
+    Down,
+    Left,
+}
+
+#[derive(Debug, Copy, Clone)]
+struct Robot {
+    position: Point,
+    heading: Direction,
+}
+
+impl Robot {
+    fn new() -> Robot {
+        Robot { position: (0, 0), heading: Direction::Up }
+    }
+
+    /// Paint the hull at the current location with the given color
+    fn paint(self, instruction: i64, mut hull: Hull) -> Hull {
+        hull.insert(self.position, instruction);
+        hull
+    }
+
+    /// Execute a turn instruction (turn & move forward)
+    fn turn(&mut self, instruction: i64) {
+        // turn depending on the instruction
+        let heading = self.heading as i8;
+        self.heading = match instruction {
+            0 => num::FromPrimitive::from_i8((heading - 1).rem_euclid(4)),
+            1 => num::FromPrimitive::from_i8((heading + 1).rem_euclid(4)),
+            _ => panic!("Got an unknown turning instruction!"),
+        }
+        .unwrap();
+
+        // move one step forward
+        self.forward();
+    }
+
+    fn forward(&mut self) {
+        let (x, y) = self.position;
+        self.position = match self.heading {
+            Direction::Up => (x, y - 1),
+            Direction::Right => (x + 1, y),
+            Direction::Down => (x, y + 1),
+            Direction::Left => (x - 1, y),
+        }
+    }
+
+    /// Give a readout of the color of the hull at the currenct position
+    fn read_camera(self, hull: &Hull) -> i64 {
+        *hull.get(&self.position).unwrap_or(&0)
+    }
+}
 
 pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_robot_read_camera_default_color() {
+        let hull = HashMap::new();
+        let robot = Robot::new();
+
+        assert_eq!(robot.read_camera(&hull), 0);
+    }
+
+    #[test]
+    fn test_robot_read_camera_white() {
+        let mut hull = HashMap::new();
+        hull.insert((1, 1), 1);
+        let mut robot = Robot::new();
+        robot.position = (1, 1);
+
+        assert_eq!(robot.read_camera(&hull), 1);
+    }
+
+    #[test]
+    fn test_robot_paint_white() {
+        let hull = HashMap::new();
+        let mut robot = Robot::new();
+        robot.position = (2, 0);
+
+        let mut expected_hull = HashMap::new();
+        expected_hull.insert((2, 0), 1);
+
+        assert_eq!(robot.paint(1, hull), expected_hull);
+    }
+
+    #[test]
+    fn test_robot_paint_black() {
+        let hull = HashMap::new();
+        let mut robot = Robot::new();
+        robot.position = (-1, -2);
+
+        let mut expected_hull = HashMap::new();
+        expected_hull.insert((-1, -2), 0);
+
+        assert_eq!(robot.paint(0, hull), expected_hull);
+    }
+
+    #[test]
+    fn test_robot_turn_left() {
+        let mut robot = Robot::new();
+        robot.position = (1, 1);
+        robot.heading = Direction::Up;
+
+        robot.turn(0);
+
+        assert_eq!(robot.heading, Direction::Left);
+        assert_eq!(robot.position, (0, 1));
+    }
+
+    #[test]
+    fn test_robot_turn_right() {
+        let mut robot = Robot::new();
+        robot.position = (0, -2);
+        robot.heading = Direction::Right;
+
+        robot.turn(1);
+
+        assert_eq!(robot.heading, Direction::Down);
+        assert_eq!(robot.position, (0, -1));
+    }
 }
