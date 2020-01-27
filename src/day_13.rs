@@ -36,8 +36,16 @@ use std::collections::HashMap;
 const INPUT: &str = include_str!("../input/day_13.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let game = intcode::load(INPUT);
+    let (_, _, outputs) = intcode::start(game, Vec::new());
+    let screen = render(outputs);
+
+    let block_tiles =
+        screen.values().filter(|tile| tile == &&Tile::Block).count();
+    println!(
+        "There have been {} block tiles rendered on the screen",
+        block_tiles
+    );
 }
 
 type Point = (i64, i64);
