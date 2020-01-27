@@ -84,6 +84,32 @@ pub fn run() {
     game.insert(0, 2);
 
     // play the game
+    screen = Screen::new();
+    let (mut program, mut status, mut outputs) =
+        intcode::start(game, intcode::Inputs::new());
+    let mut score = render(&outputs, &mut screen).unwrap();
+    loop {
+        let joystick = determine_joystick(&screen);
+        let (new_program, new_status, new_outputs) =
+            intcode::resume(program, status, vec![joystick as i64]);
+        program = new_program;
+        status = new_status;
+        outputs = new_outputs;
+        match render(&outputs, &mut screen) {
+            Some(updated_score) => {
+                score = updated_score;
+            }
+            None => {}
+        };
+
+        // comment the display for faster execution
+        display(&screen, score);
+
+        if status == intcode::ExitStatus::Finished {
+            break;
+        }
+    }
+    println!("The final score of the game is: {}", score);
 }
 
 type Point = (i64, i64);
