@@ -68,6 +68,7 @@ pub fn run() {
         "There have been {} block tiles rendered on the screen",
         block_tiles
     );
+    display(&screen);
 }
 
 type Point = (i64, i64);
@@ -80,6 +81,26 @@ enum Tile {
     Block = 2,
     HorizontalPaddle = 3,
     Ball = 4,
+}
+
+fn display(screen: &Screen) {
+    let x_min = screen.keys().map(|&(x, _)| x).min().unwrap();
+    let x_max = screen.keys().map(|&(x, _)| x).max().unwrap();
+    let y_min = screen.keys().map(|&(_, y)| y).min().unwrap();
+    let y_max = screen.keys().map(|&(_, y)| y).max().unwrap();
+
+    for y in y_min..=y_max {
+        for x in x_min..=x_max {
+            match *screen.get(&(x, y)).unwrap_or(&Tile::Empty) {
+                Tile::Empty => print!(" "),
+                Tile::Wall => print!("\u{2588}"),
+                Tile::Block => print!("\u{2592}"),
+                Tile::HorizontalPaddle => print!("-"),
+                Tile::Ball => print!("o"),
+            };
+        }
+        print!("\n");
+    }
 }
 
 fn render(outputs: intcode::Outputs) -> Screen {
