@@ -60,8 +60,9 @@ const INPUT: &str = include_str!("../input/day_13.txt");
 
 pub fn run() {
     let mut game = intcode::load(INPUT);
-    let (_, _, outputs) = intcode::start(game.clone(), Vec::new());
-    let (screen, _) = render(outputs);
+    let (_, _, outputs) = intcode::start(game.clone(), intcode::Inputs::new());
+    let mut screen = Screen::new();
+    render(&outputs, &mut screen);
 
     let block_tiles =
         screen.values().filter(|tile| tile == &&Tile::Block).count();
@@ -97,8 +98,10 @@ enum Joystick {
 }
 
 fn determine_joystick(screen: &Screen) -> Joystick {
-    let (ball_x, _) = find_tile(screen, Tile::Ball).unwrap();
-    let (paddle_x, _) = find_tile(screen, Tile::HorizontalPaddle).unwrap();
+    let (ball_x, _) =
+        find_tile(screen, Tile::Ball).expect("Ball did not exist");
+    let (paddle_x, _) = find_tile(screen, Tile::HorizontalPaddle)
+        .expect("HorizontalPaddle did not exist");
     match ball_x.cmp(&paddle_x) {
         Ordering::Equal => Joystick::Neutral,
         Ordering::Greater => Joystick::Right,
@@ -133,19 +136,20 @@ fn display(screen: &Screen) {
     }
 }
 
-fn render(outputs: intcode::Outputs) -> (Screen, i64) {
-    let mut screen = HashMap::new();
+fn render(outputs: &intcode::Outputs, screen: &mut Screen) -> i64 {
     let mut score = 0;
     for (&x, &y, &value) in outputs.iter().tuples() {
         // extract the score
         if x == -1 && y == 0 {
             score = value;
+            continue;
         }
-        let tile = FromPrimitive::from_i64(value).unwrap();
+        let tile = FromPrimitive::from_i64(value)
+            .expect("Could not translate to a tile: {}");
         screen.insert((x, y), tile);
     }
 
-    (screen, score)
+    score
 }
 
 #[cfg(test)]
@@ -155,31 +159,50 @@ mod tests {
     #[test]
     fn test_render_1() {
         let outputs = vec![1, 2, 3, 6, 5, 4];
+        let mut screen = Screen::new();
 
-        let mut expected_screen = HashMap::new();
+        let mut expected_screen = Screen::new();
         expected_screen.insert((1, 2), Tile::HorizontalPaddle);
         expected_screen.insert((6, 5), Tile::Ball);
 
-        let (actual_screen, _) = render(outputs);
-        assert_eq!(actual_screen, expected_screen);
+        render(&outputs, &mut screen);
+        assert_eq!(screen, expected_screen);
     }
 
     #[test]
     fn test_render_2() {
         let outputs = vec![-10, 5, 2, 400, -400, 1, 0, 0, 0];
+        let mut screen = Screen::new();
 
-        let mut expected_screen = HashMap::new();
+        let mut expected_screen = Screen::new();
         expected_screen.insert((-10, 5), Tile::Block);
         expected_screen.insert((400, -400), Tile::Wall);
         expected_screen.insert((0, 0), Tile::Empty);
 
-        let (actual_screen, _) = render(outputs);
-        assert_eq!(actual_screen, expected_screen);
+        render(&outputs, &mut screen);
+        assert_eq!(screen, expected_screen);
+    }
+
+    #[test]
+    fn test_render_resume() {
+        let outputs = vec![3, 0, 3, 4, 0, 0, 1, 2, 4, 2, 3, 0];
+        let mut screen = Screen::new();
+        screen.insert((4, 0), Tile::HorizontalPaddle);
+        screen.insert((2, 3), Tile::Ball);
+
+        let mut expected_screen = Screen::new();
+        expected_screen.insert((4, 0), Tile::Empty);
+        expected_screen.insert((2, 3), Tile::Empty);
+        expected_screen.insert((3, 0), Tile::HorizontalPaddle);
+        expected_screen.insert((1, 2), Tile::Ball);
+
+        render(&outputs, &mut screen);
+        assert_eq!(screen, expected_screen);
     }
 
     #[test]
     fn determine_joystick_neutral() {
-        let mut screen = HashMap::new();
+        let mut screen = Screen::new();
         screen.insert((8, 8), Tile::HorizontalPaddle);
         screen.insert((8, 3), Tile::Ball);
 
@@ -188,7 +211,7 @@ mod tests {
 
     #[test]
     fn determine_joystick_left() {
-        let mut screen = HashMap::new();
+        let mut screen = Screen::new();
         screen.insert((6, -10), Tile::HorizontalPaddle);
         screen.insert((2, -12), Tile::Ball);
 
@@ -197,7 +220,7 @@ mod tests {
 
     #[test]
     fn determine_joystick_right() {
-        let mut screen = HashMap::new();
+        let mut screen = Screen::new();
         screen.insert((-10, 5), Tile::HorizontalPaddle);
         screen.insert((0, 5), Tile::Ball);
 
