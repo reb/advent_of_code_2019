@@ -28,6 +28,9 @@
 ///
 /// Start the game. How many block tiles are on the screen when the game exits?
 use intcode;
+use itertools::Itertools;
+use num::FromPrimitive;
+use num_derive::FromPrimitive;
 use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_13.txt");
@@ -37,20 +40,26 @@ pub fn run() {
     unimplemented!();
 }
 
-type Point = (i32, i32);
+type Point = (i64, i64);
 type Screen = HashMap<Point, Tile>;
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, FromPrimitive)]
 enum Tile {
-    Empty,
-    Wall,
-    Block,
-    HorizontalPaddle,
-    Ball,
+    Empty = 0,
+    Wall = 1,
+    Block = 2,
+    HorizontalPaddle = 3,
+    Ball = 4,
 }
 
 fn render(outputs: intcode::Outputs) -> Screen {
-    HashMap::new()
+    let mut screen = HashMap::new();
+    for (&x, &y, &tile_code) in outputs.iter().tuples() {
+        let tile = FromPrimitive::from_i64(tile_code).unwrap();
+        screen.insert((x, y), tile);
+    }
+
+    screen
 }
 
 #[cfg(test)]
