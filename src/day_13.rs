@@ -59,7 +59,7 @@ use std::collections::HashMap;
 const INPUT: &str = include_str!("../input/day_13.txt");
 
 pub fn run() {
-    let game = intcode::load(INPUT);
+    let mut game = intcode::load(INPUT);
     let (_, _, outputs) = intcode::start(game.clone(), Vec::new());
     let screen = render(outputs);
 
@@ -70,6 +70,9 @@ pub fn run() {
         block_tiles
     );
     display(&screen);
+
+    // set the game to free play
+    game.insert(0, 2);
 
     // play the game
 }
