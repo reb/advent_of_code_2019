@@ -52,14 +52,14 @@
 use intcode;
 use itertools::Itertools;
 use num::FromPrimitive;
-use num_derive::FromPrimitive;
+use num_derive::{FromPrimitive, ToPrimitive};
 use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_13.txt");
 
 pub fn run() {
     let game = intcode::load(INPUT);
-    let (_, _, outputs) = intcode::start(game, Vec::new());
+    let (_, _, outputs) = intcode::start(game.clone(), Vec::new());
     let screen = render(outputs);
 
     let block_tiles =
@@ -69,6 +69,8 @@ pub fn run() {
         block_tiles
     );
     display(&screen);
+
+    // play the game
 }
 
 type Point = (i64, i64);
@@ -81,6 +83,17 @@ enum Tile {
     Block = 2,
     HorizontalPaddle = 3,
     Ball = 4,
+}
+
+#[derive(Debug, PartialEq, ToPrimitive)]
+enum Joystick {
+    Neutral = 0,
+    Left = -1,
+    Right = 1,
+}
+
+fn determine_joystick(screen: &Screen) -> Joystick {
+    Joystick::Neutral
 }
 
 fn display(screen: &Screen) {
@@ -138,5 +151,32 @@ mod tests {
         expected_screen.insert((0, 0), Tile::Empty);
 
         assert_eq!(render(outputs), expected_screen);
+    }
+
+    #[test]
+    fn determine_joystick_neutral() {
+        let mut screen = HashMap::new();
+        screen.insert((8, 8), Tile::HorizontalPaddle);
+        screen.insert((8, 3), Tile::Ball);
+
+        assert_eq!(determine_joystick(&screen), Joystick::Neutral);
+    }
+
+    #[test]
+    fn determine_joystick_left() {
+        let mut screen = HashMap::new();
+        screen.insert((6, -10), Tile::HorizontalPaddle);
+        screen.insert((2, -12), Tile::Ball);
+
+        assert_eq!(determine_joystick(&screen), Joystick::Left);
+    }
+
+    #[test]
+    fn determine_joystick_right() {
+        let mut screen = HashMap::new();
+        screen.insert((-10, 5), Tile::HorizontalPaddle);
+        screen.insert((0, 5), Tile::Ball);
+
+        assert_eq!(determine_joystick(&screen), Joystick::Right);
     }
 }
