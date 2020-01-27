@@ -53,6 +53,7 @@ use intcode;
 use itertools::Itertools;
 use num::FromPrimitive;
 use num_derive::{FromPrimitive, ToPrimitive};
+use std::cmp::Ordering;
 use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_13.txt");
@@ -93,7 +94,20 @@ enum Joystick {
 }
 
 fn determine_joystick(screen: &Screen) -> Joystick {
-    Joystick::Neutral
+    let (ball_x, _) = find_tile(screen, Tile::Ball).unwrap();
+    let (paddle_x, _) = find_tile(screen, Tile::HorizontalPaddle).unwrap();
+    match ball_x.cmp(&paddle_x) {
+        Ordering::Equal => Joystick::Neutral,
+        Ordering::Greater => Joystick::Right,
+        Ordering::Less => Joystick::Left,
+    }
+}
+
+fn find_tile(screen: &Screen, to_find: Tile) -> Option<Point> {
+    match screen.iter().find(|(_, tile)| tile == &&to_find) {
+        Some((point, _)) => Some(*point),
+        None => None,
+    }
 }
 
 fn display(screen: &Screen) {
