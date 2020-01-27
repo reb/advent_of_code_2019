@@ -49,6 +49,7 @@
 ///
 /// Beat the game by breaking all the blocks. What is your score after the last
 /// block is broken?
+use console::Term;
 use intcode;
 use itertools::Itertools;
 use num::FromPrimitive;
@@ -57,6 +58,14 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_13.txt");
+static mut DISPLAY_SETTINGS: DisplaySettings = DisplaySettings {
+    initialized: false,
+    x_min: 0,
+    x_max: 0,
+    y_min: 0,
+    y_max: 0,
+    size: 0,
+};
 
 pub fn run() {
     let mut game = intcode::load(INPUT);
@@ -70,7 +79,6 @@ pub fn run() {
         "There have been {} block tiles rendered on the screen",
         block_tiles
     );
-    display(&screen);
 
     // set the game to free play
     game.insert(0, 2);
@@ -80,6 +88,15 @@ pub fn run() {
 
 type Point = (i64, i64);
 type Screen = HashMap<Point, Tile>;
+
+struct DisplaySettings {
+    initialized: bool,
+    x_min: i64,
+    x_max: i64,
+    y_min: i64,
+    y_max: i64,
+    size: usize,
+}
 
 #[derive(Debug, PartialEq, FromPrimitive)]
 enum Tile {
@@ -116,23 +133,45 @@ fn find_tile(screen: &Screen, to_find: Tile) -> Option<Point> {
     }
 }
 
-fn display(screen: &Screen) {
-    let x_min = screen.keys().map(|&(x, _)| x).min().unwrap();
-    let x_max = screen.keys().map(|&(x, _)| x).max().unwrap();
-    let y_min = screen.keys().map(|&(_, y)| y).min().unwrap();
-    let y_max = screen.keys().map(|&(_, y)| y).max().unwrap();
+fn init_display_settings(screen: &Screen) {
+    unsafe {
+        DISPLAY_SETTINGS.x_min = screen.keys().map(|&(x, _)| x).min().unwrap();
+        DISPLAY_SETTINGS.x_max = screen.keys().map(|&(x, _)| x).max().unwrap();
+        DISPLAY_SETTINGS.y_min = screen.keys().map(|&(_, y)| y).min().unwrap();
+        DISPLAY_SETTINGS.y_max = screen.keys().map(|&(_, y)| y).max().unwrap();
+        DISPLAY_SETTINGS.size =
+            (DISPLAY_SETTINGS.y_max - DISPLAY_SETTINGS.y_min) as usize + 2;
+        DISPLAY_SETTINGS.initialized = true;
 
-    for y in y_min..=y_max {
-        for x in x_min..=x_max {
-            match *screen.get(&(x, y)).unwrap_or(&Tile::Empty) {
-                Tile::Empty => print!(" "),
-                Tile::Wall => print!("\u{2588}"),
-                Tile::Block => print!("\u{2592}"),
-                Tile::HorizontalPaddle => print!("-"),
-                Tile::Ball => print!("o"),
-            };
+        // move the cursor down to create space for the display
+        for _ in 0..DISPLAY_SETTINGS.size {
+            print!("\n");
         }
-        print!("\n");
+    }
+}
+
+fn display(screen: &Screen, score: i64) {
+    unsafe {
+        if !DISPLAY_SETTINGS.initialized {
+            init_display_settings(screen);
+        }
+
+        // move the cursor back up to overwrite the existing display
+        Term::stdout().move_cursor_up(DISPLAY_SETTINGS.size).ok();
+
+        for y in DISPLAY_SETTINGS.y_min..=DISPLAY_SETTINGS.y_max {
+            for x in DISPLAY_SETTINGS.x_min..=DISPLAY_SETTINGS.x_max {
+                match *screen.get(&(x, y)).unwrap_or(&Tile::Empty) {
+                    Tile::Empty => print!(" "),
+                    Tile::Wall => print!("\u{2588}"),
+                    Tile::Block => print!("\u{2592}"),
+                    Tile::HorizontalPaddle => print!("-"),
+                    Tile::Ball => print!("o"),
+                };
+            }
+            print!("\n");
+        }
+        println!("Score: {:09}", score);
     }
 }
 
