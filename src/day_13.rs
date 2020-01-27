@@ -61,7 +61,7 @@ const INPUT: &str = include_str!("../input/day_13.txt");
 pub fn run() {
     let mut game = intcode::load(INPUT);
     let (_, _, outputs) = intcode::start(game.clone(), Vec::new());
-    let screen = render(outputs);
+    let (screen, _) = render(outputs);
 
     let block_tiles =
         screen.values().filter(|tile| tile == &&Tile::Block).count();
@@ -133,14 +133,19 @@ fn display(screen: &Screen) {
     }
 }
 
-fn render(outputs: intcode::Outputs) -> Screen {
+fn render(outputs: intcode::Outputs) -> (Screen, i64) {
     let mut screen = HashMap::new();
-    for (&x, &y, &tile_code) in outputs.iter().tuples() {
-        let tile = FromPrimitive::from_i64(tile_code).unwrap();
+    let mut score = 0;
+    for (&x, &y, &value) in outputs.iter().tuples() {
+        // extract the score
+        if x == -1 && y == 0 {
+            score = value;
+        }
+        let tile = FromPrimitive::from_i64(value).unwrap();
         screen.insert((x, y), tile);
     }
 
-    screen
+    (screen, score)
 }
 
 #[cfg(test)]
@@ -155,7 +160,8 @@ mod tests {
         expected_screen.insert((1, 2), Tile::HorizontalPaddle);
         expected_screen.insert((6, 5), Tile::Ball);
 
-        assert_eq!(render(outputs), expected_screen);
+        let (actual_screen, _) = render(outputs);
+        assert_eq!(actual_screen, expected_screen);
     }
 
     #[test]
@@ -167,7 +173,8 @@ mod tests {
         expected_screen.insert((400, -400), Tile::Wall);
         expected_screen.insert((0, 0), Tile::Empty);
 
-        assert_eq!(render(outputs), expected_screen);
+        let (actual_screen, _) = render(outputs);
+        assert_eq!(actual_screen, expected_screen);
     }
 
     #[test]
