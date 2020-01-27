@@ -136,12 +136,12 @@ fn display(screen: &Screen) {
     }
 }
 
-fn render(outputs: &intcode::Outputs, screen: &mut Screen) -> i64 {
-    let mut score = 0;
+fn render(outputs: &intcode::Outputs, screen: &mut Screen) -> Option<i64> {
+    let mut score = None;
     for (&x, &y, &value) in outputs.iter().tuples() {
         // extract the score
         if x == -1 && y == 0 {
-            score = value;
+            score = Some(value);
             continue;
         }
         let tile = FromPrimitive::from_i64(value)
