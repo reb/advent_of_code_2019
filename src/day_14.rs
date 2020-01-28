@@ -119,3 +119,149 @@ pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
 }
+
+#[derive(Debug, PartialEq)]
+struct Component<'a> {
+    quantity: i32,
+    name: &'a str,
+}
+
+#[derive(Debug, PartialEq)]
+struct Formula<'a> {
+    requirements: Vec<Component<'a>>,
+    result: Component<'a>,
+}
+
+fn load_formulas(input: &str) -> Vec<Formula> {
+    Vec::new()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_load_formulas_1() {
+        let input = "10 ORE => 10 A\n\
+                     1 ORE => 1 B\n\
+                     7 A, 1 B => 1 C\n\
+                     7 A, 1 C => 1 D\n\
+                     7 A, 1 D => 1 E\n\
+                     7 A, 1 E => 1 FUEL\n";
+
+        let expected_formulas = vec![
+            Formula {
+                requirements: vec![Component { quantity: 10, name: "ORE" }],
+                result: Component { quantity: 10, name: "A" },
+            },
+            Formula {
+                requirements: vec![Component { quantity: 1, name: "ORE" }],
+                result: Component { quantity: 1, name: "B" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 7, name: "A" },
+                    Component { quantity: 1, name: "B" },
+                ],
+                result: Component { quantity: 1, name: "C" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 7, name: "A" },
+                    Component { quantity: 1, name: "C" },
+                ],
+                result: Component { quantity: 1, name: "D" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 7, name: "A" },
+                    Component { quantity: 1, name: "D" },
+                ],
+                result: Component { quantity: 1, name: "E" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 7, name: "A" },
+                    Component { quantity: 1, name: "E" },
+                ],
+                result: Component { quantity: 1, name: "FUEL" },
+            },
+        ];
+
+        assert_eq!(load_formulas(input), expected_formulas);
+    }
+
+    #[test]
+    fn test_load_formulas_2() {
+        let input =
+            "157 ORE => 5 NZVS\n\
+             165 ORE => 6 DCFZ\n\
+             44 XJWVT, 5 KHKGT, 1 QDVJ, 29 NZVS, 9 GPVTF, 48 HKGWZ => 1 FUEL\n\
+             12 HKGWZ, 1 GPVTF, 8 PSHF => 9 QDVJ\n\
+             179 ORE => 7 PSHF\n\
+             177 ORE => 5 HKGWZ\n\
+             7 DCFZ, 7 PSHF => 2 XJWVT\n\
+             165 ORE => 2 GPVTF\n\
+             3 DCFZ, 7 NZVS, 5 HKGWZ, 10 PSHF => 8 KHKGT";
+
+        let expected_formulas = vec![
+            Formula {
+                requirements: vec![Component { quantity: 157, name: "ORE" }],
+                result: Component { quantity: 5, name: "NZVS" },
+            },
+            Formula {
+                requirements: vec![Component { quantity: 165, name: "ORE" }],
+                result: Component { quantity: 6, name: "DCFZ" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 44, name: "XJWVT" },
+                    Component { quantity: 5, name: "KHKGT" },
+                    Component { quantity: 1, name: "QDVJ" },
+                    Component { quantity: 29, name: "NZVS" },
+                    Component { quantity: 9, name: "GPVTF" },
+                    Component { quantity: 48, name: "HKGWZ" },
+                ],
+                result: Component { quantity: 1, name: "FUEL" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 12, name: "HKGWZ" },
+                    Component { quantity: 1, name: "GPVTF" },
+                    Component { quantity: 8, name: "PSHF" },
+                ],
+                result: Component { quantity: 9, name: "QDVJ" },
+            },
+            Formula {
+                requirements: vec![Component { quantity: 179, name: "ORE" }],
+                result: Component { quantity: 7, name: "PSHF" },
+            },
+            Formula {
+                requirements: vec![Component { quantity: 177, name: "ORE" }],
+                result: Component { quantity: 5, name: "HKGWZ" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 7, name: "DCFZ" },
+                    Component { quantity: 7, name: "PSHF" },
+                ],
+                result: Component { quantity: 2, name: "XJWVT" },
+            },
+            Formula {
+                requirements: vec![Component { quantity: 165, name: "ORE" }],
+                result: Component { quantity: 2, name: "GPVTF" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 3, name: "DCFZ" },
+                    Component { quantity: 7, name: "NZVS" },
+                    Component { quantity: 5, name: "HKGWZ" },
+                    Component { quantity: 10, name: "PSHF" },
+                ],
+                result: Component { quantity: 8, name: "KHKGT" },
+            },
+        ];
+
+        assert_eq!(load_formulas(input), expected_formulas);
+    }
+}
