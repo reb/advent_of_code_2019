@@ -112,6 +112,7 @@
 ///
 /// Given the list of reactions in your puzzle input, what is the minimum amount
 /// of ORE required to produce exactly 1 FUEL?
+use itertools::Itertools;
 
 const INPUT: &str = include_str!("../input/day_14.txt");
 
@@ -132,8 +133,41 @@ struct Formula<'a> {
     result: Component<'a>,
 }
 
+impl Formula<'_> {
+    fn from<'a>(requirements: &'a str, result: &'a str) -> Formula<'a> {
+        Formula {
+            result: Component::from(result),
+            requirements: requirements
+                .split(',')
+                .map(|component| Component::from(component))
+                .collect(),
+        }
+    }
+}
+
+impl Component<'_> {
+    fn from<'a>(string: &'a str) -> Component<'a> {
+        let (quantity, name) = string
+            .trim()
+            .split(' ')
+            .tuples()
+            .map(|(quantity, name)| (quantity.parse().expect("an i32"), name))
+            .next()
+            .unwrap();
+
+        Component { quantity, name }
+    }
+}
+
 fn load_formulas(input: &str) -> Vec<Formula> {
-    Vec::new()
+    input
+        .lines()
+        .map(|line| {
+            let (requirements, result) =
+                line.split("=>").tuples().next().unwrap();
+            Formula::from(requirements, result)
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -263,5 +297,26 @@ mod tests {
         ];
 
         assert_eq!(load_formulas(input), expected_formulas);
+    }
+
+    #[test]
+    fn test_formula_from() {
+        let requirements =
+            "53 STKFG, 6 MNCFX, 46 VJHF, 81 HVMC, 68 CXFTF, 25 GNMV ";
+        let result = " 1 FUEL";
+
+        let expected_formula = Formula {
+            requirements: vec![
+                Component { quantity: 53, name: "STKFG" },
+                Component { quantity: 6, name: "MNCFX" },
+                Component { quantity: 46, name: "VJHF" },
+                Component { quantity: 81, name: "HVMC" },
+                Component { quantity: 68, name: "CXFTF" },
+                Component { quantity: 25, name: "GNMV" },
+            ],
+            result: Component { quantity: 1, name: "FUEL" },
+        };
+
+        assert_eq!(Formula::from(requirements, result), expected_formula);
     }
 }
