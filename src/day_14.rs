@@ -113,6 +113,8 @@
 /// Given the list of reactions in your puzzle input, what is the minimum amount
 /// of ORE required to produce exactly 1 FUEL?
 use itertools::Itertools;
+use num::Integer;
+use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_14.txt");
 
@@ -120,6 +122,8 @@ pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
 }
+
+type Storage<'a> = HashMap<&'a str, i32>;
 
 #[derive(Debug, PartialEq)]
 struct Component<'a> {
@@ -133,8 +137,8 @@ struct Formula<'a> {
     result: Component<'a>,
 }
 
-impl Formula<'_> {
-    fn from<'a>(requirements: &'a str, result: &'a str) -> Formula<'a> {
+impl<'a> Formula<'a> {
+    fn from(requirements: &'a str, result: &'a str) -> Formula<'a> {
         Formula {
             result: Component::from(result),
             requirements: requirements
@@ -143,10 +147,24 @@ impl Formula<'_> {
                 .collect(),
         }
     }
+
+    /// Produce at least the amount given
+    fn produce(&self, amount: i32, storage: &mut Storage<'a>) {
+        let times = match amount.div_rem(&self.result.quantity) {
+            (quotient, 0) => quotient,
+            (quotient, _) => quotient + 1,
+        };
+        *(storage.entry(&self.result.name).or_insert(0)) +=
+            times * self.result.quantity;
+        for component in self.requirements.iter() {
+            *(storage.entry(&component.name).or_insert(0)) -=
+                times * component.quantity;
+        }
+    }
 }
 
-impl Component<'_> {
-    fn from<'a>(string: &'a str) -> Component<'a> {
+impl<'a> Component<'a> {
+    fn from(string: &'a str) -> Component<'a> {
         let (quantity, name) = string
             .trim()
             .split(' ')
@@ -157,6 +175,35 @@ impl Component<'_> {
 
         Component { quantity, name }
     }
+}
+
+fn produce_missing<'a>(
+    mut storage: Storage<'a>,
+    formulas: &'a Vec<Formula<'a>>,
+) -> Storage<'a> {
+    // collect all components that are below 0
+    let components_missing = storage
+        .iter()
+        .filter(|(_, amount)| amount < &&0)
+        .map(|(name, amount)| (*name, *amount))
+        .collect::<Vec<_>>();
+
+    for (name, amount) in components_missing.iter() {
+        let formula = find_formula(name, formulas);
+        formula.produce(-amount, &mut storage);
+    }
+
+    storage
+}
+
+fn find_formula<'a>(
+    name: &str,
+    formulas: &'a Vec<Formula<'a>>,
+) -> &'a Formula<'a> {
+    formulas
+        .iter()
+        .find(|formula| formula.result.name == name)
+        .expect("an Formula")
 }
 
 fn load_formulas(input: &str) -> Vec<Formula> {
@@ -318,5 +365,46 @@ mod tests {
         };
 
         assert_eq!(Formula::from(requirements, result), expected_formula);
+    }
+
+    #[test]
+    fn test_produce_missing() {
+        let mut storage = Storage::new();
+        // require 4 of C
+        storage.insert("C", -4);
+        let formulas = vec![
+            Formula {
+                requirements: vec![Component { quantity: 1, name: "0" }],
+                result: Component { quantity: 1, name: "A" },
+            },
+            Formula {
+                requirements: vec![Component { quantity: 1, name: "0" }],
+                result: Component { quantity: 1, name: "B" },
+            },
+            Formula {
+                requirements: vec![
+                    Component { quantity: 25, name: "A" },
+                    Component { quantity: 3, name: "B" },
+                ],
+                result: Component { quantity: 3, name: "C" },
+            },
+        ];
+
+        // first round should only produce for the missing "C"
+        let mut expected_storage = Storage::new();
+        expected_storage.insert("A", -50);
+        expected_storage.insert("B", -6);
+        expected_storage.insert("C", 2);
+
+        storage = produce_missing(storage, &formulas);
+        assert_eq!(storage, expected_storage);
+
+        // second round should produce the missing "A" and "B"
+        expected_storage.insert("A", 0);
+        expected_storage.insert("B", 0);
+        expected_storage.insert("0", -56);
+
+        storage = produce_missing(storage, &formulas);
+        assert_eq!(storage, expected_storage);
     }
 }
