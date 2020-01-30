@@ -153,11 +153,11 @@ pub fn run() {
     );
 }
 
-type Storage<'a> = HashMap<&'a str, i32>;
+type Storage<'a> = HashMap<&'a str, i64>;
 
 #[derive(Debug, PartialEq)]
 struct Component<'a> {
-    quantity: i32,
+    quantity: i64,
     name: &'a str,
 }
 
@@ -179,7 +179,7 @@ impl<'a> Formula<'a> {
     }
 
     /// Produce at least the amount given
-    fn produce(&self, amount: i32, storage: &mut Storage<'a>) {
+    fn produce(&self, amount: i64, storage: &mut Storage<'a>) {
         let times = match amount.div_rem(&self.result.quantity) {
             (quotient, 0) => quotient,
             (quotient, _) => quotient + 1,
@@ -199,7 +199,7 @@ impl<'a> Component<'a> {
             .trim()
             .split(' ')
             .tuples()
-            .map(|(quantity, name)| (quantity.parse().expect("an i32"), name))
+            .map(|(quantity, name)| (quantity.parse().expect("an i64"), name))
             .next()
             .unwrap();
 
