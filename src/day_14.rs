@@ -119,8 +119,26 @@ use std::collections::HashMap;
 const INPUT: &str = include_str!("../input/day_14.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let formulas = load_formulas(INPUT);
+    let mut storage = Storage::new();
+
+    // force to produce 1 FUEL
+    storage.insert("FUEL", -1);
+
+    loop {
+        let new_storage = produce_missing(storage.clone(), &formulas);
+        if new_storage == storage {
+            break;
+        }
+        storage = new_storage;
+    }
+
+    let amount_of_ore =
+        -storage.get(&"ORE").expect("the ORE entry to be there");
+    println!(
+        "The amount of ORE needed to produce 1 FUEL is: {}",
+        amount_of_ore
+    );
 }
 
 type Storage<'a> = HashMap<&'a str, i32>;
