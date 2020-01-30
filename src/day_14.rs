@@ -207,8 +207,10 @@ fn produce_missing<'a>(
         .collect::<Vec<_>>();
 
     for (name, amount) in components_missing.iter() {
-        let formula = find_formula(name, formulas);
-        formula.produce(-amount, &mut storage);
+        match find_formula(name, formulas) {
+            Some(formula) => formula.produce(-amount, &mut storage),
+            None => {}
+        }
     }
 
     storage
@@ -217,11 +219,8 @@ fn produce_missing<'a>(
 fn find_formula<'a>(
     name: &str,
     formulas: &'a Vec<Formula<'a>>,
-) -> &'a Formula<'a> {
-    formulas
-        .iter()
-        .find(|formula| formula.result.name == name)
-        .expect("an Formula")
+) -> Option<&'a Formula<'a>> {
+    formulas.iter().find(|formula| formula.result.name == name)
 }
 
 fn load_formulas(input: &str) -> Vec<Formula> {
