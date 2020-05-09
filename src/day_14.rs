@@ -137,19 +137,40 @@ pub fn run() {
     // force to produce 1 FUEL
     storage.insert("FUEL", -1);
 
+    storage = produce_until_none_missing(storage, &formulas);
+
+    let ore_per_fuel = -storage.get(&"ORE").expect("the ORE entry to be there");
+    println!("The amount of ORE needed to produce 1 FUEL is: {}", ore_per_fuel);
+
+    // set the amount of ore available to a trillion
+    let ore_available = 1_000_000_000_000;
+    storage = Storage::new();
+    storage.insert("ORE", ore_available);
+
+    let mut fuel_produced = 0;
+
+    // execute fuel production in batches
+    let mut next_fuel_batch;
     loop {
-        let new_storage = produce_missing(storage.clone(), &formulas);
-        if new_storage == storage {
+        // set a batch size that will at least be reached
+        next_fuel_batch = storage.get("ORE").unwrap() / ore_per_fuel;
+        // make sure the do at least 1
+        if next_fuel_batch == 0 {
+            next_fuel_batch = 1;
+        }
+        *storage.entry("FUEL").or_insert(0) -= next_fuel_batch;
+
+        // produce the batch
+        storage = produce_until_none_missing(storage, &formulas);
+        if storage.get("ORE").expect("the ORE entry to be there") < &0 {
+            // stop if it goes beyond the capacity of ORE
             break;
         }
-        storage = new_storage;
+        fuel_produced += next_fuel_batch;
     }
-
-    let amount_of_ore =
-        -storage.get(&"ORE").expect("the ORE entry to be there");
     println!(
-        "The amount of ORE needed to produce 1 FUEL is: {}",
-        amount_of_ore
+        "The amount of FUEL that can be produced with a trillion ORE is: {}",
+        fuel_produced
     );
 }
 
@@ -204,6 +225,19 @@ impl<'a> Component<'a> {
             .unwrap();
 
         Component { quantity, name }
+    }
+}
+
+fn produce_until_none_missing<'a>(
+    mut storage: Storage<'a>,
+    formulas: &'a Vec<Formula<'a>>,
+) -> Storage<'a> {
+    loop {
+        let new_storage = produce_missing(storage.clone(), &formulas);
+        if new_storage == storage {
+            return new_storage;
+        }
+        storage = new_storage;
     }
 }
 
