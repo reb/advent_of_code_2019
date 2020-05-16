@@ -172,21 +172,22 @@ const INPUT: &str = include_str!("../input/day_05.txt");
 pub fn run() {
     let program = intcode::load(INPUT);
 
-    let air_conditioner_inputs = vec![1];
-    let (_, _, outputs) =
-        intcode::start(program.clone(), air_conditioner_inputs);
+    let air_conditioner_input = 1;
+    let mut runner = intcode::start(program.clone());
+    runner = runner.step(air_conditioner_input).unwrap();
 
-    let air_conditioner_diagnostic_code = outputs.last().unwrap();
+    let air_conditioner_diagnostic_code = runner.outputs.last().unwrap();
 
     println!(
         "The diagnostic code produced with input 1 is: {}",
         air_conditioner_diagnostic_code
     );
 
-    let thermal_radiator_inputs = vec![5];
-    let (_, _, outputs) = intcode::start(program, thermal_radiator_inputs);
+    let thermal_radiator_input = 5;
+    runner = intcode::start(program);
+    runner = runner.step(thermal_radiator_input).unwrap();
 
-    let thermal_radiator_diagnostic_code = outputs.last().unwrap();
+    let thermal_radiator_diagnostic_code = runner.outputs.last().unwrap();
 
     println!(
         "The diagnostic code produced with input 5 is: {}",

@@ -86,16 +86,18 @@ const INPUT: &str = include_str!("../input/day_09.txt");
 
 pub fn run() {
     let boost_program = intcode::load(INPUT);
-    let (_, _, test_outputs) = intcode::start(boost_program.clone(), vec![1]);
-    let keycode = test_outputs[0];
+    let mut test_runner = intcode::start(boost_program.clone());
+    test_runner = test_runner.step(1).unwrap();
+    let keycode = test_runner.outputs[0];
 
     println!(
         "Running the BOOST program in test produces the keycode: {}",
         keycode
     );
 
-    let (_, _, outputs) = intcode::start(boost_program.clone(), vec![2]);
-    let coordinates = outputs[0];
+    let mut runner = intcode::start(boost_program.clone());
+    runner = runner.step(2).unwrap();
+    let coordinates = runner.outputs[0];
     println!(
         "In sensor boost mode it produces the coordinates: {}",
         coordinates

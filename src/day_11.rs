@@ -98,12 +98,10 @@
 /// Build a new emergency hull painting robot and run the Intcode program on it.
 /// How many panels does it paint at least once?
 use intcode;
-use intcode::ExitStatus::WaitingForInput;
 use itertools::Itertools;
 use num;
 use num_derive::{FromPrimitive, ToPrimitive};
 use std::collections::HashMap;
-use std::mem::discriminant;
 
 const INPUT: &str = include_str!("../input/day_11.txt");
 
@@ -187,20 +185,24 @@ pub fn run() {
 
 fn paint_hull(brain: intcode::Program, mut hull: Hull) -> Hull {
     let mut robot = Robot::new();
+    let mut runner = intcode::start(brain);
 
-    let (mut program, mut status, mut outputs) =
-        intcode::start(brain, Vec::new());
-    while discriminant(&status) == discriminant(&WaitingForInput(0, 0)) {
-        for (paint_instruction, turn_instruction) in outputs.iter().tuples() {
+    loop {
+        // execute paint instructions
+        for (paint_instruction, turn_instruction) in
+            runner.outputs.iter().tuples()
+        {
             robot.paint(paint_instruction, &mut hull);
             robot.turn(turn_instruction);
         }
-        let inputs = vec![robot.read_camera(&hull)];
-        let (new_program, new_status, new_outputs) =
-            intcode::resume(program, status, inputs);
-        program = new_program;
-        status = new_status;
-        outputs = new_outputs;
+        // read the camera
+        let input = robot.read_camera(&hull);
+        // start a next step
+        runner = runner.step(input).unwrap();
+
+        if runner.status == intcode::ExitStatus::Finished {
+            break;
+        }
     }
     hull
 }

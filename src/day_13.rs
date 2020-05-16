@@ -69,9 +69,9 @@ static mut DISPLAY_SETTINGS: DisplaySettings = DisplaySettings {
 
 pub fn run() {
     let mut game = intcode::load(INPUT);
-    let (_, _, outputs) = intcode::start(game.clone(), intcode::Inputs::new());
+    let mut runner = intcode::start(game.clone());
     let mut screen = Screen::new();
-    render(&outputs, &mut screen);
+    render(&runner.outputs, &mut screen);
 
     let block_tiles =
         screen.values().filter(|tile| tile == &&Tile::Block).count();
@@ -85,17 +85,12 @@ pub fn run() {
 
     // play the game
     screen = Screen::new();
-    let (mut program, mut status, mut outputs) =
-        intcode::start(game, intcode::Inputs::new());
-    let mut score = render(&outputs, &mut screen).unwrap();
+    runner = intcode::start(game);
+    let mut score = render(&runner.outputs, &mut screen).unwrap();
     loop {
         let joystick = determine_joystick(&screen);
-        let (new_program, new_status, new_outputs) =
-            intcode::resume(program, status, vec![joystick as i64]);
-        program = new_program;
-        status = new_status;
-        outputs = new_outputs;
-        match render(&outputs, &mut screen) {
+        runner = runner.step(joystick as i64).unwrap();
+        match render(&runner.outputs, &mut screen) {
             Some(updated_score) => {
                 score = updated_score;
             }
@@ -105,7 +100,7 @@ pub fn run() {
         // comment the display for faster execution
         display(&screen, score);
 
-        if status == intcode::ExitStatus::Finished {
+        if runner.status == intcode::ExitStatus::Finished {
             break;
         }
     }

@@ -174,24 +174,22 @@ fn run_amplifiers(
     // initialize phase settings
     let mut programs = Vec::new();
     for &phase_setting in phase_sequence {
-        let inputs = vec![phase_setting];
-        let (program, status, _) = intcode::start(amplifier.clone(), inputs);
-        programs.push((program, status));
+        let runner = intcode::start(amplifier.clone());
+        programs.push(runner.step(phase_setting).unwrap());
     }
 
     let mut signal = 0;
     while programs
         .iter()
-        .all(|(_, status)| status != &intcode::ExitStatus::Finished)
+        .all(|runner| runner.status != intcode::ExitStatus::Finished)
     {
         programs = programs
             .drain(0..)
-            .map(|(program, status)| {
+            .map(|runner| {
                 let inputs = vec![signal];
-                let (new_program, new_status, outputs) =
-                    intcode::resume(program, status, inputs);
-                signal = outputs[0];
-                (new_program, new_status)
+                let new_runner = runner.steps(inputs).unwrap();
+                signal = new_runner.outputs[0];
+                new_runner
             })
             .collect();
     }
