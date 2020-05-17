@@ -95,10 +95,141 @@
 /// What is the fewest number of movement commands required to move the repair droid from its
 /// starting position to the location of the oxygen system?
 use intcode;
+use num_derive::{FromPrimitive, ToPrimitive};
+use std::collections::HashMap;
 
 const INPUT: &str = include_str!("../input/day_15.txt");
 
 pub fn run() {
-    let droid = intcode::load(INPUT);
-    let (_new_droid, _, _) = intcode::start(droid, intcode::Inputs::new());
+    let program = intcode::load(INPUT);
+
+    let map = create_map(program);
+}
+
+fn create_map(program: intcode::Program) -> Map {
+    // create a droid to explore the map
+    let mut droid = Droid::new();
+
+    let mut runner = intcode::start(program);
+
+    loop {}
+
+    droid.map
+}
+
+type Point = (i32, i32);
+
+#[derive(Debug, PartialEq, Eq)]
+enum Section {
+    Start,
+    Path,
+    Wall,
+    OxygenSystem,
+}
+type Map = HashMap<Point, Section>;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive)]
+enum Direction {
+    North = 1,
+    South,
+    West,
+    East,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive)]
+enum Reply {
+    Wall,  // 0: The repair droid hit a wall. Its position has not changed.
+    Moved, // 1: The repair droid has moved one step in the requested direction.
+    OxygenSystem, // 2: The repair droid has moved one step in the requested direction; its new
+                  // position is the location of the oxygen system.
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct Droid {
+    position: Point,
+    map: Map,
+}
+
+impl Droid {
+    fn new() -> Droid {
+        let position = (0, 0);
+        let mut map = Map::new();
+        map.insert(position, Section::Start);
+        Droid { position, map }
+    }
+
+    fn movement(&mut self, command: Direction, reply: Reply) {
+        match reply {
+            Reply::Wall => {
+                self.map
+                    .insert(self.point_in_direction(command), Section::Wall);
+            }
+            Reply::Moved => {
+                self.position = self.point_in_direction(command);
+                self.map.insert(self.position, Section::Path);
+            }
+            Reply::OxygenSystem => {
+                self.position = self.point_in_direction(command);
+                self.map.insert(self.position, Section::OxygenSystem);
+            }
+        }
+    }
+
+    fn point_in_direction(&self, direction: Direction) -> Point {
+        let (x, y) = self.position;
+        match direction {
+            Direction::North => (x, y - 1),
+            Direction::South => (x, y + 1),
+            Direction::West => (x - 1, y),
+            Direction::East => (x + 1, y),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_droid_movement_wall() {
+        let mut droid = Droid::new();
+        droid.movement(Direction::North, Reply::Wall);
+
+        let mut expected_map = Map::new();
+        expected_map.insert((0, 0), Section::Start);
+        expected_map.insert((0, -1), Section::Wall);
+        let expected_droid = Droid { position: (0, 0), map: expected_map };
+
+        assert_eq!(droid, expected_droid);
+    }
+
+    #[test]
+    fn test_droid_movement_moved() {
+        let mut droid = Droid::new();
+        droid.movement(Direction::South, Reply::Moved);
+
+        let mut expected_map = Map::new();
+        expected_map.insert((0, 0), Section::Start);
+        expected_map.insert((0, 1), Section::Path);
+        let expected_droid = Droid { position: (0, 1), map: expected_map };
+
+        assert_eq!(droid, expected_droid);
+    }
+
+    #[test]
+    fn test_droid_movement_oxygen_system() {
+        let mut droid = Droid::new();
+        droid.movement(Direction::West, Reply::Moved);
+        droid.movement(Direction::West, Reply::Moved);
+        droid.movement(Direction::West, Reply::OxygenSystem);
+
+        let mut expected_map = Map::new();
+        expected_map.insert((0, 0), Section::Start);
+        expected_map.insert((-1, 0), Section::Path);
+        expected_map.insert((-2, 0), Section::Path);
+        expected_map.insert((-3, 0), Section::OxygenSystem);
+        let expected_droid = Droid { position: (-3, 0), map: expected_map };
+
+        assert_eq!(droid, expected_droid);
+    }
 }
