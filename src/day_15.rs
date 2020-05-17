@@ -95,6 +95,7 @@
 /// What is the fewest number of movement commands required to move the repair droid from its
 /// starting position to the location of the oxygen system?
 use intcode;
+use num;
 use num_derive::{FromPrimitive, ToPrimitive};
 use std::collections::HashMap;
 
@@ -104,6 +105,27 @@ pub fn run() {
     let program = intcode::load(INPUT);
 
     let map = create_map(program);
+    display(&map);
+}
+
+fn display(map: &Map) {
+    let x_min = map.keys().map(|&(x, _)| x).min().unwrap();
+    let x_max = map.keys().map(|&(x, _)| x).max().unwrap();
+    let y_min = map.keys().map(|&(_, y)| y).min().unwrap();
+    let y_max = map.keys().map(|&(_, y)| y).max().unwrap();
+
+    for y in y_min..=y_max {
+        for x in x_min..=x_max {
+            match map.get(&(x, y)) {
+                None => print!(" "),
+                Some(Section::Path) => print!("\u{2591}"),
+                Some(Section::Wall) => print!("\u{2588}"),
+                Some(Section::OxygenSystem) => print!("O"),
+                Some(Section::Start) => print!("X"),
+            };
+        }
+        print!("\n");
+    }
 }
 
 fn create_map(program: intcode::Program) -> Map {
@@ -112,7 +134,19 @@ fn create_map(program: intcode::Program) -> Map {
 
     let mut runner = intcode::start(program);
 
-    loop {}
+    loop {
+        let direction = droid.pledge_direction();
+        runner = runner.step(direction as i64).unwrap();
+
+        assert!(runner.outputs.len() == 1);
+
+        let reply: Reply =
+            num::FromPrimitive::from_i64(runner.outputs[0]).unwrap();
+        droid.movement(direction, reply);
+        if reply == Reply::OxygenSystem {
+            break;
+        }
+    }
 
     droid.map
 }
@@ -148,6 +182,8 @@ enum Reply {
 struct Droid {
     position: Point,
     map: Map,
+    hand: Option<Direction>,
+    turns: i32,
 }
 
 impl Droid {
@@ -155,7 +191,7 @@ impl Droid {
         let position = (0, 0);
         let mut map = Map::new();
         map.insert(position, Section::Start);
-        Droid { position, map }
+        Droid { position, map, hand: None, turns: 0 }
     }
 
     fn movement(&mut self, command: Direction, reply: Reply) {
@@ -184,6 +220,79 @@ impl Droid {
             Direction::East => (x + 1, y),
         }
     }
+
+    fn pledge_direction(&mut self) -> Direction {
+        // Pledge algorithm
+        let direction = match self.hand {
+            None => {
+                // if there is no hand on the wall prefer North
+                let wall_in_preferred_direction = self
+                    .map
+                    .get(&self.point_in_direction(Direction::North))
+                    .contains(&&Section::Wall);
+                match wall_in_preferred_direction {
+                    true => {
+                        // if there is a wall put a hand in the North direction
+                        self.hand = Some(Direction::North);
+                        self.turns -= 1;
+                        // and take a left turn to the West
+                        Direction::West
+                    }
+                    false => Direction::North,
+                }
+            }
+            Some(hand_direction) => {
+                let wall_in_hand_direction = self
+                    .map
+                    .get(&self.point_in_direction(hand_direction))
+                    .contains(&&Section::Wall);
+                match wall_in_hand_direction {
+                    true => {
+                        // with a hand on the wall turn counter-clockwise
+                        let intended_direction = match hand_direction {
+                            Direction::North => Direction::West,
+                            Direction::West => Direction::South,
+                            Direction::South => Direction::East,
+                            Direction::East => Direction::North,
+                        };
+                        let wall_in_intended_direction = self
+                            .map
+                            .get(&self.point_in_direction(intended_direction))
+                            .contains(&&Section::Wall);
+                        match wall_in_intended_direction {
+                            true => {
+                                // there is also a wall to the left, change hand to the left
+                                self.turns -= 1;
+                                self.hand = Some(intended_direction);
+                                // and try again
+                                self.pledge_direction()
+                            }
+                            false => intended_direction,
+                        }
+                    }
+                    false => {
+                        // its possible to go in the hand direction, turn hand clockwise
+                        self.turns += 1;
+                        self.hand = Some(match hand_direction {
+                            Direction::North => Direction::East,
+                            Direction::East => Direction::South,
+                            Direction::South => Direction::West,
+                            Direction::West => Direction::North,
+                        });
+                        hand_direction
+                    }
+                }
+            }
+        };
+        if self.turns == 0 {
+            self.hand = None
+        }
+        // println!(
+        //     "Going {:?}, at {:?}, with hand: {:?} and turns: {}",
+        //     direction, self.position, self.hand, self.turns
+        // );
+        direction
+    }
 }
 
 #[cfg(test)]
@@ -198,7 +307,8 @@ mod tests {
         let mut expected_map = Map::new();
         expected_map.insert((0, 0), Section::Start);
         expected_map.insert((0, -1), Section::Wall);
-        let expected_droid = Droid { position: (0, 0), map: expected_map };
+        let expected_droid =
+            Droid { position: (0, 0), map: expected_map, hand: None, turns: 0 };
 
         assert_eq!(droid, expected_droid);
     }
@@ -211,7 +321,8 @@ mod tests {
         let mut expected_map = Map::new();
         expected_map.insert((0, 0), Section::Start);
         expected_map.insert((0, 1), Section::Path);
-        let expected_droid = Droid { position: (0, 1), map: expected_map };
+        let expected_droid =
+            Droid { position: (0, 1), map: expected_map, hand: None, turns: 0 };
 
         assert_eq!(droid, expected_droid);
     }
@@ -228,8 +339,32 @@ mod tests {
         expected_map.insert((-1, 0), Section::Path);
         expected_map.insert((-2, 0), Section::Path);
         expected_map.insert((-3, 0), Section::OxygenSystem);
-        let expected_droid = Droid { position: (-3, 0), map: expected_map };
+        let expected_droid = Droid {
+            position: (-3, 0),
+            map: expected_map,
+            hand: None,
+            turns: 0,
+        };
 
         assert_eq!(droid, expected_droid);
+    }
+
+    #[test]
+    fn test_droid_pledge_direction_starts_north() {
+        let mut droid = Droid::new();
+
+        assert_eq!(droid.pledge_direction(), Direction::North);
+    }
+
+    #[test]
+    fn test_droid_pledge_direction_places_hand_when_blocked() {
+        let mut droid = Droid::new();
+        let mut map = Map::new();
+        map.insert((0, -1), Section::Wall);
+        droid.map = map;
+
+        assert_eq!(droid.pledge_direction(), Direction::West);
+        assert_eq!(droid.hand, Some(Direction::North));
+        assert_eq!(droid.turns, -1);
     }
 }
