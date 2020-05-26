@@ -98,6 +98,7 @@
 /// Build a new emergency hull painting robot and run the Intcode program on it.
 /// How many panels does it paint at least once?
 use intcode;
+use intcode::Step;
 use itertools::Itertools;
 use num;
 use num_derive::{FromPrimitive, ToPrimitive};
@@ -198,7 +199,7 @@ fn paint_hull(brain: intcode::Program, mut hull: Hull) -> Hull {
         // read the camera
         let input = robot.read_camera(&hull);
         // start a next step
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
 
         if runner.status == intcode::ExitStatus::Finished {
             break;

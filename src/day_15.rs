@@ -95,7 +95,8 @@
 /// What is the fewest number of movement commands required to move the repair droid from its
 /// starting position to the location of the oxygen system?
 use intcode;
-use num;
+use intcode::Step;
+use num::FromPrimitive;
 use num_derive::{FromPrimitive, ToPrimitive};
 use std::collections::HashMap;
 
@@ -129,26 +130,14 @@ fn display(map: &Map) {
 }
 
 fn create_map(program: intcode::Program) -> Map {
-    // create a droid to explore the map
-    let mut droid = Droid::new();
+    let mut droid = Droid::new(intcode::start(program));
+    let mut map = Map::new();
+    map.insert(droid.position.clone(), Section::Start);
 
-    let mut runner = intcode::start(program);
+    // TODO create an vec of droid to explore the map
 
-    loop {
-        let direction = droid.pledge_direction();
-        runner = runner.step(direction as i64).unwrap();
-
-        assert!(runner.outputs.len() == 1);
-
-        let reply: Reply =
-            num::FromPrimitive::from_i64(runner.outputs[0]).unwrap();
-        droid.movement(direction, reply);
-        if reply == Reply::OxygenSystem {
-            break;
-        }
-    }
-
-    droid.map
+    loop {}
+    map
 }
 
 type Point = (i32, i32);
@@ -179,36 +168,37 @@ enum Reply {
 }
 
 #[derive(Debug, Eq, PartialEq)]
-struct Droid {
+struct Droid<S: intcode::Step> {
     position: Point,
-    map: Map,
-    hand: Option<Direction>,
-    turns: i32,
+    stepper: S,
 }
 
-impl Droid {
-    fn new() -> Droid {
+impl<S: intcode::Step> Droid<S> {
+    fn new(stepper: S) -> Droid<S> {
         let position = (0, 0);
-        let mut map = Map::new();
-        map.insert(position, Section::Start);
-        Droid { position, map, hand: None, turns: 0 }
+        Droid { position, stepper }
     }
 
-    fn movement(&mut self, command: Direction, reply: Reply) {
+    fn update_map(mut self, command: Direction, map: &mut Map) -> Self {
+        self.stepper = self.stepper.step(command as i64);
+        let next_position = self.point_in_direction(command);
+
+        let reply = FromPrimitive::from_i64(self.stepper.output());
         match reply {
-            Reply::Wall => {
-                self.map
-                    .insert(self.point_in_direction(command), Section::Wall);
+            Some(Reply::Wall) => {
+                map.insert(next_position, Section::Wall);
             }
-            Reply::Moved => {
-                self.position = self.point_in_direction(command);
-                self.map.insert(self.position, Section::Path);
+            Some(Reply::Moved) => {
+                self.position = next_position;
+                map.insert(self.position, Section::Path);
             }
-            Reply::OxygenSystem => {
-                self.position = self.point_in_direction(command);
-                self.map.insert(self.position, Section::OxygenSystem);
+            Some(Reply::OxygenSystem) => {
+                self.position = next_position;
+                map.insert(self.position, Section::OxygenSystem);
             }
+            None => panic!("Unexpected reply"),
         }
+        self
     }
 
     fn point_in_direction(&self, direction: Direction) -> Point {
@@ -220,151 +210,78 @@ impl Droid {
             Direction::East => (x + 1, y),
         }
     }
-
-    fn pledge_direction(&mut self) -> Direction {
-        // Pledge algorithm
-        let direction = match self.hand {
-            None => {
-                // if there is no hand on the wall prefer North
-                let wall_in_preferred_direction = self
-                    .map
-                    .get(&self.point_in_direction(Direction::North))
-                    .contains(&&Section::Wall);
-                match wall_in_preferred_direction {
-                    true => {
-                        // if there is a wall put a hand in the North direction
-                        self.hand = Some(Direction::North);
-                        self.turns -= 1;
-                        // and take a left turn to the West
-                        Direction::West
-                    }
-                    false => Direction::North,
-                }
-            }
-            Some(hand_direction) => {
-                let wall_in_hand_direction = self
-                    .map
-                    .get(&self.point_in_direction(hand_direction))
-                    .contains(&&Section::Wall);
-                match wall_in_hand_direction {
-                    true => {
-                        // with a hand on the wall turn counter-clockwise
-                        let intended_direction = match hand_direction {
-                            Direction::North => Direction::West,
-                            Direction::West => Direction::South,
-                            Direction::South => Direction::East,
-                            Direction::East => Direction::North,
-                        };
-                        let wall_in_intended_direction = self
-                            .map
-                            .get(&self.point_in_direction(intended_direction))
-                            .contains(&&Section::Wall);
-                        match wall_in_intended_direction {
-                            true => {
-                                // there is also a wall to the left, change hand to the left
-                                self.turns -= 1;
-                                self.hand = Some(intended_direction);
-                                // and try again
-                                self.pledge_direction()
-                            }
-                            false => intended_direction,
-                        }
-                    }
-                    false => {
-                        // its possible to go in the hand direction, turn hand clockwise
-                        self.turns += 1;
-                        self.hand = Some(match hand_direction {
-                            Direction::North => Direction::East,
-                            Direction::East => Direction::South,
-                            Direction::South => Direction::West,
-                            Direction::West => Direction::North,
-                        });
-                        hand_direction
-                    }
-                }
-            }
-        };
-        if self.turns == 0 {
-            self.hand = None
-        }
-        // println!(
-        //     "Going {:?}, at {:?}, with hand: {:?} and turns: {}",
-        //     direction, self.position, self.hand, self.turns
-        // );
-        direction
-    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use intcode::MockStep;
 
     #[test]
     fn test_droid_movement_wall() {
-        let mut droid = Droid::new();
-        droid.movement(Direction::North, Reply::Wall);
+        let mut step_0 = MockStep::new();
+        let mut step_1 = MockStep::new();
+
+        step_1.expect_output().return_const(Reply::Wall as i64);
+        step_0.expect_step().return_once(move |_| step_1);
+
+        let mut map = Map::new();
+        let mut droid = Droid::new(step_0);
+        droid = droid.update_map(Direction::North, &mut map);
 
         let mut expected_map = Map::new();
-        expected_map.insert((0, 0), Section::Start);
         expected_map.insert((0, -1), Section::Wall);
-        let expected_droid =
-            Droid { position: (0, 0), map: expected_map, hand: None, turns: 0 };
 
-        assert_eq!(droid, expected_droid);
+        assert_eq!(&droid.position, &(0, 0));
+        assert_eq!(map, expected_map);
     }
 
     #[test]
     fn test_droid_movement_moved() {
-        let mut droid = Droid::new();
-        droid.movement(Direction::South, Reply::Moved);
+        let mut step_0 = MockStep::new();
+        let mut step_1 = MockStep::new();
+
+        step_1.expect_output().return_const(Reply::Moved as i64);
+        step_0.expect_step().return_once(move |_| step_1);
+
+        let mut map = Map::new();
+        let mut droid = Droid::new(step_0);
+        droid = droid.update_map(Direction::South, &mut map);
 
         let mut expected_map = Map::new();
-        expected_map.insert((0, 0), Section::Start);
         expected_map.insert((0, 1), Section::Path);
-        let expected_droid =
-            Droid { position: (0, 1), map: expected_map, hand: None, turns: 0 };
 
-        assert_eq!(droid, expected_droid);
+        assert_eq!(&droid.position, &(0, 1));
+        assert_eq!(map, expected_map);
     }
 
     #[test]
     fn test_droid_movement_oxygen_system() {
-        let mut droid = Droid::new();
-        droid.movement(Direction::West, Reply::Moved);
-        droid.movement(Direction::West, Reply::Moved);
-        droid.movement(Direction::West, Reply::OxygenSystem);
+        let mut step_0 = MockStep::new();
+        let mut step_1 = MockStep::new();
+        let mut step_2 = MockStep::new();
+        let mut step_3 = MockStep::new();
+
+        step_3.expect_output().return_const(Reply::OxygenSystem as i64);
+        step_2.expect_output().return_const(Reply::Moved as i64);
+        step_1.expect_output().return_const(Reply::Moved as i64);
+
+        step_2.expect_step().return_once(move |_| step_3);
+        step_1.expect_step().return_once(move |_| step_2);
+        step_0.expect_step().return_once(move |_| step_1);
+
+        let mut droid = Droid::new(step_0);
+        let mut map = Map::new();
+        droid = droid.update_map(Direction::West, &mut map);
+        droid = droid.update_map(Direction::West, &mut map);
+        droid = droid.update_map(Direction::West, &mut map);
 
         let mut expected_map = Map::new();
-        expected_map.insert((0, 0), Section::Start);
         expected_map.insert((-1, 0), Section::Path);
         expected_map.insert((-2, 0), Section::Path);
         expected_map.insert((-3, 0), Section::OxygenSystem);
-        let expected_droid = Droid {
-            position: (-3, 0),
-            map: expected_map,
-            hand: None,
-            turns: 0,
-        };
 
-        assert_eq!(droid, expected_droid);
-    }
-
-    #[test]
-    fn test_droid_pledge_direction_starts_north() {
-        let mut droid = Droid::new();
-
-        assert_eq!(droid.pledge_direction(), Direction::North);
-    }
-
-    #[test]
-    fn test_droid_pledge_direction_places_hand_when_blocked() {
-        let mut droid = Droid::new();
-        let mut map = Map::new();
-        map.insert((0, -1), Section::Wall);
-        droid.map = map;
-
-        assert_eq!(droid.pledge_direction(), Direction::West);
-        assert_eq!(droid.hand, Some(Direction::North));
-        assert_eq!(droid.turns, -1);
+        assert_eq!(&droid.position, &(-3, 0));
+        assert_eq!(map, expected_map);
     }
 }

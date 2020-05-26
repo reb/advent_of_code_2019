@@ -9,6 +9,8 @@ extern crate itertools;
 #[cfg_attr(test, macro_use(array))]
 extern crate ndarray;
 extern crate console;
+#[cfg(test)]
+extern crate mockall;
 extern crate num;
 extern crate num_derive;
 extern crate num_traits;

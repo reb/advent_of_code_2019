@@ -81,13 +81,14 @@
 /// Run the BOOST program in sensor boost mode. What are the coordinates of the
 /// distress signal?
 use intcode;
+use intcode::Step;
 
 const INPUT: &str = include_str!("../input/day_09.txt");
 
 pub fn run() {
     let boost_program = intcode::load(INPUT);
     let mut test_runner = intcode::start(boost_program.clone());
-    test_runner = test_runner.step(1).unwrap();
+    test_runner = test_runner.step(1);
     let keycode = test_runner.outputs[0];
 
     println!(
@@ -96,7 +97,7 @@ pub fn run() {
     );
 
     let mut runner = intcode::start(boost_program.clone());
-    runner = runner.step(2).unwrap();
+    runner = runner.step(2);
     let coordinates = runner.outputs[0];
     println!(
         "In sensor boost mode it produces the coordinates: {}",

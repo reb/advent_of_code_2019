@@ -1,3 +1,5 @@
+#[cfg(test)]
+use mockall::automock;
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -7,34 +9,50 @@ enum Mode {
     Relative,
 }
 
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
 pub enum ExitStatus {
     Finished,
     WaitingForInput(i64, i64),
 }
 
 pub type Program = HashMap<i64, i64>;
-pub type Inputs = Vec<i64>;
-pub type Outputs = Vec<i64>;
+pub type Input = i64;
+pub type Output = i64;
+pub type Inputs = Vec<Input>;
+pub type Outputs = Vec<Output>;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Runner {
     pub program: Program,
     pub status: ExitStatus,
     pub outputs: Outputs,
 }
 
-impl Runner {
-    pub fn step(self, input: i64) -> Result<Runner, &'static str> {
+#[cfg_attr(test, automock)]
+pub trait Step {
+    fn step(self, input: Input) -> Self;
+    fn steps(self, inputs: Inputs) -> Self;
+    fn output(&self) -> Output;
+    fn outputs(&self) -> Outputs;
+}
+
+impl Step for Runner {
+    fn step(self, input: Input) -> Runner {
         let inputs = vec![input];
         self.steps(inputs)
     }
 
-    pub fn steps(self, inputs: Inputs) -> Result<Runner, &'static str> {
-        match self.status {
-            ExitStatus::Finished => Err("Program already finished"),
-            _ => Ok(resume(self.program, self.status, inputs)),
-        }
+    fn steps(self, inputs: Inputs) -> Runner {
+        resume(self.program, self.status, inputs)
+    }
+
+    fn output(&self) -> Output {
+        assert!(self.outputs.len() == 1, "Got none or more than 1 output");
+        self.outputs[0]
+    }
+
+    fn outputs(&self) -> Outputs {
+        self.outputs.clone()
     }
 }
 
@@ -363,14 +381,14 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_runner_step_on_finished_program() {
         let runner = Runner {
             program: program![99],
             status: ExitStatus::Finished,
             outputs: Outputs::new(),
         };
-        let result = runner.steps(Inputs::new());
-        assert!(result.is_err());
+        runner.steps(Inputs::new());
     }
 
     #[test]
@@ -381,7 +399,7 @@ mod tests {
         let outputs = vec![1];
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(
             runner,
             Runner {
@@ -399,7 +417,7 @@ mod tests {
         let input = 8;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -411,7 +429,7 @@ mod tests {
         let input = 7;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![0]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -423,7 +441,7 @@ mod tests {
         let input = 7;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -435,7 +453,7 @@ mod tests {
         let input = 8;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![0]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -447,7 +465,7 @@ mod tests {
         let input = 8;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -459,7 +477,7 @@ mod tests {
         let input = 7;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![0]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -471,7 +489,7 @@ mod tests {
         let input = 7;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -483,7 +501,7 @@ mod tests {
         let input = 8;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![0]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -496,7 +514,7 @@ mod tests {
         let input = 0;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![0]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -509,7 +527,7 @@ mod tests {
         let input = 2;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -522,7 +540,7 @@ mod tests {
         let input = 0;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![0]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -535,7 +553,7 @@ mod tests {
         let input = 2;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -551,7 +569,7 @@ mod tests {
         let input = 7;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![999]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -567,7 +585,7 @@ mod tests {
         let input = 8;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1000]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }
@@ -583,7 +601,7 @@ mod tests {
         let input = 9;
 
         let mut runner = start(input_program);
-        runner = runner.step(input).unwrap();
+        runner = runner.step(input);
         assert_eq!(runner.outputs, vec![1001]);
         assert_eq!(runner.status, ExitStatus::Finished);
     }

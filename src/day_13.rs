@@ -51,6 +51,7 @@
 /// block is broken?
 use console::Term;
 use intcode;
+use intcode::Step;
 use itertools::Itertools;
 use num::FromPrimitive;
 use num_derive::{FromPrimitive, ToPrimitive};
@@ -89,7 +90,7 @@ pub fn run() {
     let mut score = render(&runner.outputs, &mut screen).unwrap();
     loop {
         let joystick = determine_joystick(&screen);
-        runner = runner.step(joystick as i64).unwrap();
+        runner = runner.step(joystick as i64);
         match render(&runner.outputs, &mut screen) {
             Some(updated_score) => {
                 score = updated_score;

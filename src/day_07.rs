@@ -135,6 +135,7 @@
 /// Try every combination of the new phase settings on the amplifier feedback
 /// loop. What is the highest signal that can be sent to the thrusters?
 use intcode;
+use intcode::Step;
 use itertools::Itertools;
 
 const INPUT: &str = include_str!("../input/day_07.txt");
@@ -175,7 +176,7 @@ fn run_amplifiers(
     let mut programs = Vec::new();
     for &phase_setting in phase_sequence {
         let runner = intcode::start(amplifier.clone());
-        programs.push(runner.step(phase_setting).unwrap());
+        programs.push(runner.step(phase_setting));
     }
 
     let mut signal = 0;
@@ -187,7 +188,7 @@ fn run_amplifiers(
             .drain(0..)
             .map(|runner| {
                 let inputs = vec![signal];
-                let new_runner = runner.steps(inputs).unwrap();
+                let new_runner = runner.steps(inputs);
                 signal = new_runner.outputs[0];
                 new_runner
             })

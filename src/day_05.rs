@@ -166,6 +166,7 @@
 ///
 /// What is the diagnostic code for system ID 5?
 use intcode;
+use intcode::Step;
 
 const INPUT: &str = include_str!("../input/day_05.txt");
 
@@ -174,7 +175,7 @@ pub fn run() {
 
     let air_conditioner_input = 1;
     let mut runner = intcode::start(program.clone());
-    runner = runner.step(air_conditioner_input).unwrap();
+    runner = runner.step(air_conditioner_input);
 
     let air_conditioner_diagnostic_code = runner.outputs.last().unwrap();
 
@@ -185,7 +186,7 @@ pub fn run() {
 
     let thermal_radiator_input = 5;
     runner = intcode::start(program);
-    runner = runner.step(thermal_radiator_input).unwrap();
+    runner = runner.step(thermal_radiator_input);
 
     let thermal_radiator_diagnostic_code = runner.outputs.last().unwrap();
 
