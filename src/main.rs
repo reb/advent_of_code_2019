@@ -15,6 +15,8 @@ extern crate num;
 extern crate num_derive;
 extern crate num_traits;
 extern crate petgraph;
+extern crate strum;
+extern crate strum_macros;
 
 use std::collections::HashMap;
 use std::env;

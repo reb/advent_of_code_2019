@@ -95,10 +95,11 @@
 /// What is the fewest number of movement commands required to move the repair droid from its
 /// starting position to the location of the oxygen system?
 use intcode;
-use intcode::Step;
 use num::FromPrimitive;
 use num_derive::{FromPrimitive, ToPrimitive};
 use std::collections::HashMap;
+use strum::IntoEnumIterator;
+use strum_macros::EnumIter;
 
 const INPUT: &str = include_str!("../input/day_15.txt");
 
@@ -130,13 +131,51 @@ fn display(map: &Map) {
 }
 
 fn create_map(program: intcode::Program) -> Map {
-    let mut droid = Droid::new(intcode::start(program));
+    let mut droids = Vec::new();
     let mut map = Map::new();
-    map.insert(droid.position.clone(), Section::Start);
 
-    // TODO create an vec of droid to explore the map
+    let starting_droid = Droid::new(intcode::start(program));
+    map.insert(starting_droid.position.clone(), Section::Start);
+    droids.push(starting_droid);
 
-    loop {}
+    let mut steps_done = 0;
+    loop {
+        droids = droids
+            .iter()
+            .flat_map(|droid| {
+                // look in all direction
+                Direction::iter()
+                    .filter_map(|direction| {
+                        let point = droid.point_in_direction(direction);
+                        // check if the map already knows about the point in that direction
+                        if !map.contains_key(&point) {
+                            // let a clone of the droid go in that direction
+                            let new_droid = droid.clone();
+                            return Some(
+                                new_droid.update_map(direction, &mut map),
+                            );
+                        }
+                        None
+                    })
+                    .collect::<Vec<Droid<_>>>()
+            })
+            .collect();
+
+        steps_done += 1;
+
+        let oxygen_system_found = map
+            .values()
+            .find(|section| section == &&Section::OxygenSystem)
+            .is_some();
+        if oxygen_system_found {
+            break;
+        }
+    }
+    println!(
+        "The minimal amount of steps towards the Oxygen System is {}",
+        steps_done
+    );
+
     map
 }
 
@@ -151,7 +190,9 @@ enum Section {
 }
 type Map = HashMap<Point, Section>;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive)]
+#[derive(
+    Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive, EnumIter,
+)]
 enum Direction {
     North = 1,
     South,
@@ -167,7 +208,7 @@ enum Reply {
                   // position is the location of the oxygen system.
 }
 
-#[derive(Debug, Eq, PartialEq)]
+#[derive(Debug, Eq, PartialEq, Clone)]
 struct Droid<S: intcode::Step> {
     position: Point,
     stepper: S,
