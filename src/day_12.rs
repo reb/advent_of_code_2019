@@ -380,10 +380,10 @@ mod tests {
 
     #[test]
     fn test_load_moons_1() {
-        /// <x=-1, y=0, z=2>
-        /// <x=2, y=-10, z=-7>
-        /// <x=4, y=-8, z=8>
-        /// <x=3, y=5, z=-1>
+        // <x=-1, y=0, z=2>
+        // <x=2, y=-10, z=-7>
+        // <x=4, y=-8, z=8>
+        // <x=3, y=5, z=-1>
         let input = "<x=-1, y=0, z=2>\n<x=2, y=-10, z=-7>\n<x=4, y=-8, z=8>\n<x=3, y=5, z=-1>";
 
         let output = vec![
@@ -410,10 +410,10 @@ mod tests {
 
     #[test]
     fn test_load_moons_2() {
-        /// <x=-8, y=-10, z=0>
-        /// <x=5, y=5, z=10>
-        /// <x=2, y=-7, z=3>
-        /// <x=9, y=-8, z=-3>
+        // <x=-8, y=-10, z=0>
+        // <x=5, y=5, z=10>
+        // <x=2, y=-7, z=3>
+        // <x=9, y=-8, z=-3>
         let input = "<x=-8, y=-10, z=0>\n<x=5, y=5, z=10>\n<x=2, y=-7, z=3>\n<x=9, y=-8, z=-3>";
 
         let output = vec![
@@ -447,11 +447,11 @@ mod tests {
     }
     #[test]
     fn test_step_1() {
-        /// After 0 steps:
-        /// pos=<x=-1, y=  0, z= 2>, vel=<x= 0, y= 0, z= 0>
-        /// pos=<x= 2, y=-10, z=-7>, vel=<x= 0, y= 0, z= 0>
-        /// pos=<x= 4, y= -8, z= 8>, vel=<x= 0, y= 0, z= 0>
-        /// pos=<x= 3, y=  5, z=-1>, vel=<x= 0, y= 0, z= 0>
+        // After 0 steps:
+        // pos=<x=-1, y=  0, z= 2>, vel=<x= 0, y= 0, z= 0>
+        // pos=<x= 2, y=-10, z=-7>, vel=<x= 0, y= 0, z= 0>
+        // pos=<x= 4, y= -8, z= 8>, vel=<x= 0, y= 0, z= 0>
+        // pos=<x= 3, y=  5, z=-1>, vel=<x= 0, y= 0, z= 0>
         let mut input = vec![
             Moon {
                 position: Vector3D { x: -1, y: 0, z: 2 },
@@ -471,11 +471,11 @@ mod tests {
             },
         ];
 
-        /// After 1 step:
-        /// pos=<x= 2, y=-1, z= 1>, vel=<x= 3, y=-1, z=-1>
-        /// pos=<x= 3, y=-7, z=-4>, vel=<x= 1, y= 3, z= 3>
-        /// pos=<x= 1, y=-7, z= 5>, vel=<x=-3, y= 1, z=-3>
-        /// pos=<x= 2, y= 2, z= 0>, vel=<x=-1, y=-3, z= 1>
+        // After 1 step:
+        // pos=<x= 2, y=-1, z= 1>, vel=<x= 3, y=-1, z=-1>
+        // pos=<x= 3, y=-7, z=-4>, vel=<x= 1, y= 3, z= 3>
+        // pos=<x= 1, y=-7, z= 5>, vel=<x=-3, y= 1, z=-3>
+        // pos=<x= 2, y= 2, z= 0>, vel=<x=-1, y=-3, z= 1>
         let output = vec![
             Moon {
                 position: Vector3D { x: 2, y: -1, z: 1 },
@@ -501,11 +501,11 @@ mod tests {
 
     #[test]
     fn test_step_2() {
-        /// After 1 step:
-        /// pos=<x= 2, y=-1, z= 1>, vel=<x= 3, y=-1, z=-1>
-        /// pos=<x= 3, y=-7, z=-4>, vel=<x= 1, y= 3, z= 3>
-        /// pos=<x= 1, y=-7, z= 5>, vel=<x=-3, y= 1, z=-3>
-        /// pos=<x= 2, y= 2, z= 0>, vel=<x=-1, y=-3, z= 1>
+        // After 1 step:
+        // pos=<x= 2, y=-1, z= 1>, vel=<x= 3, y=-1, z=-1>
+        // pos=<x= 3, y=-7, z=-4>, vel=<x= 1, y= 3, z= 3>
+        // pos=<x= 1, y=-7, z= 5>, vel=<x=-3, y= 1, z=-3>
+        // pos=<x= 2, y= 2, z= 0>, vel=<x=-1, y=-3, z= 1>
         let mut input = vec![
             Moon {
                 position: Vector3D { x: 2, y: -1, z: 1 },
@@ -525,11 +525,11 @@ mod tests {
             },
         ];
 
-        /// After 2 steps:
-        /// pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
-        /// pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
-        /// pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
-        /// pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>
+        // After 2 steps:
+        // pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
+        // pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
+        // pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
+        // pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>
         let output = vec![
             Moon {
                 position: Vector3D { x: 5, y: -3, z: -1 },
@@ -555,11 +555,11 @@ mod tests {
 
     #[test]
     fn test_step_3() {
-        /// After 2 steps:
-        /// pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
-        /// pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
-        /// pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
-        /// pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>
+        // After 2 steps:
+        // pos=<x= 5, y=-3, z=-1>, vel=<x= 3, y=-2, z=-2>
+        // pos=<x= 1, y=-2, z= 2>, vel=<x=-2, y= 5, z= 6>
+        // pos=<x= 1, y=-4, z=-1>, vel=<x= 0, y= 3, z=-6>
+        // pos=<x= 1, y=-4, z= 2>, vel=<x=-1, y=-6, z= 2>
         let mut input = vec![
             Moon {
                 position: Vector3D { x: 5, y: -3, z: -1 },
@@ -579,11 +579,11 @@ mod tests {
             },
         ];
 
-        /// After 3 steps:
-        /// pos=<x= 5, y=-6, z=-1>, vel=<x= 0, y=-3, z= 0>
-        /// pos=<x= 0, y= 0, z= 6>, vel=<x=-1, y= 2, z= 4>
-        /// pos=<x= 2, y= 1, z=-5>, vel=<x= 1, y= 5, z=-4>
-        /// pos=<x= 1, y=-8, z= 2>, vel=<x= 0, y=-4, z= 0>
+        // After 3 steps:
+        // pos=<x= 5, y=-6, z=-1>, vel=<x= 0, y=-3, z= 0>
+        // pos=<x= 0, y= 0, z= 6>, vel=<x=-1, y= 2, z= 4>
+        // pos=<x= 2, y= 1, z=-5>, vel=<x= 1, y= 5, z=-4>
+        // pos=<x= 1, y=-8, z= 2>, vel=<x= 0, y=-4, z= 0>
         let output = vec![
             Moon {
                 position: Vector3D { x: 5, y: -6, z: -1 },
@@ -609,8 +609,8 @@ mod tests {
 
     #[test]
     fn test_energy() {
-        /// pos=<x=  8, y=-12, z= -9>, vel=<x= -7, y=  3, z=  0>
-        /// pot:  8 + 12 +  9 = 29;   kin: 7 +  3 + 0 = 10;   total: 29 * 10 = 290
+        // pos=<x=  8, y=-12, z= -9>, vel=<x= -7, y=  3, z=  0>
+        // pot:  8 + 12 +  9 = 29;   kin: 7 +  3 + 0 = 10;   total: 29 * 10 = 290
         let input = Moon {
             position: Vector3D { x: 8, y: -12, z: -9 },
             velocity: Vector3D { x: -7, y: 3, z: 0 },
