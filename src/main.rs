@@ -1,6 +1,3 @@
-#![feature(slice_patterns)]
-#![feature(vec_remove_item)]
-
 extern crate regex;
 #[macro_use]
 extern crate lazy_static;
