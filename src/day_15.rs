@@ -183,6 +183,14 @@ pub fn run() {
         "The distance from the starting point to the oxygen system is: {}",
         distance_to_start
     );
+
+    // find the longest distance from the oxygen system
+    let longest_distance =
+        distance_map.iter().map(|(_, distance)| distance).max().unwrap();
+    println!(
+        "The amount of minutes it will take to fill everything with oxygen is: {}",
+        longest_distance
+    );
 }
 
 fn find_location(section: Section, map: &Map) -> Point {
