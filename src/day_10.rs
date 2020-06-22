@@ -479,20 +479,9 @@ mod tests {
         let mut actual_output = calculate_fractions(&input);
         let first_point = actual_output.get_mut(&(1, 0)).unwrap();
 
-        // see if the fraction for (1, 0) are all contained in the heap
-        while let Some(fraction) = first_point.pop() {
-            assert_ne!(
-                expected.remove_item(&fraction),
-                None,
-                "Fraction {:?} was not expected in the heap",
-                fraction
-            );
-        }
-        assert!(
-            expected.is_empty(),
-            "Fractions {:?} were not in the heap",
-            expected
-        );
+        expected.sort();
+        first_point.sort();
+        assert_eq!(*first_point, expected);
     }
 
     #[test]
