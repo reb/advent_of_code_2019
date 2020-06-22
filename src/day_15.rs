@@ -97,6 +97,8 @@
 use intcode;
 use num::FromPrimitive;
 use num_derive::{FromPrimitive, ToPrimitive};
+use petgraph::algo::dijkstra;
+use petgraph::graphmap::UnGraphMap;
 use std::collections::HashMap;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
@@ -108,6 +110,36 @@ pub fn run() {
 
     let map = create_map(program);
     display(&map);
+
+    // converting to a graph for easier traversal
+    let graph = convert_to_graph(&map);
+
+    // create a map with distances to all points
+    let oxygen_system_location = find_location(Section::OxygenSystem, &map);
+    let distance_map = dijkstra(&graph, oxygen_system_location, None, |_| 1);
+
+    // find the distance to the starting point
+    let starting_location = find_location(Section::Start, &map);
+    let distance_to_start = distance_map.get(&starting_location).unwrap();
+
+    println!(
+        "The distance from the starting point to the oxygen system is: {}",
+        distance_to_start
+    );
+}
+
+fn find_location(section: Section, map: &Map) -> Point {
+    *map.iter()
+        .find_map(
+            |(location, map_section)| {
+                if map_section == &section {
+                    Some(location)
+                } else {
+                    None
+                }
+            },
+        )
+        .unwrap()
 }
 
 fn display(map: &Map) {
@@ -138,8 +170,7 @@ fn create_map(program: intcode::Program) -> Map {
     map.insert(starting_droid.position.clone(), Section::Start);
     droids.push(starting_droid);
 
-    let mut steps_done = 0;
-    loop {
+    while droids.len() > 0 {
         droids = droids
             .iter()
             .flat_map(|droid| {
@@ -160,23 +191,31 @@ fn create_map(program: intcode::Program) -> Map {
                     .collect::<Vec<Droid<_>>>()
             })
             .collect();
+    }
+    map
+}
 
-        steps_done += 1;
+fn convert_to_graph(map: &Map) -> Graph {
+    let mut graph = Graph::new();
 
-        let oxygen_system_found = map
-            .values()
-            .find(|section| section == &&Section::OxygenSystem)
-            .is_some();
-        if oxygen_system_found {
-            break;
+    for (point, section) in map.iter() {
+        // discard walls
+        if section == &Section::Wall {
+            continue;
+        }
+
+        // add the node to the graph
+        let node = graph.add_node(*point);
+
+        // look in all directions to add edges
+        for direction in Direction::iter() {
+            let other_point = point_in_direction(point, direction);
+            if graph.contains_node(other_point) {
+                graph.add_edge(node, other_point, ());
+            }
         }
     }
-    println!(
-        "The minimal amount of steps towards the Oxygen System is {}",
-        steps_done
-    );
-
-    map
+    graph
 }
 
 type Point = (i32, i32);
@@ -188,7 +227,9 @@ enum Section {
     Wall,
     OxygenSystem,
 }
+
 type Map = HashMap<Point, Section>;
+type Graph = UnGraphMap<Point, ()>;
 
 #[derive(
     Debug, Copy, Clone, Eq, PartialEq, FromPrimitive, ToPrimitive, EnumIter,
@@ -243,13 +284,17 @@ impl<S: intcode::Step> Droid<S> {
     }
 
     fn point_in_direction(&self, direction: Direction) -> Point {
-        let (x, y) = self.position;
-        match direction {
-            Direction::North => (x, y - 1),
-            Direction::South => (x, y + 1),
-            Direction::West => (x - 1, y),
-            Direction::East => (x + 1, y),
-        }
+        point_in_direction(&self.position, direction)
+    }
+}
+
+fn point_in_direction(start: &Point, direction: Direction) -> Point {
+    let (x, y) = *start;
+    match direction {
+        Direction::North => (x, y - 1),
+        Direction::South => (x, y + 1),
+        Direction::West => (x - 1, y),
+        Direction::East => (x + 1, y),
     }
 }
 
@@ -324,5 +369,46 @@ mod tests {
 
         assert_eq!(&droid.position, &(-3, 0));
         assert_eq!(map, expected_map);
+    }
+
+    #[test]
+    fn test_convert_to_graph() {
+        //   01234
+        // 0  XXX
+        // 1 XS..X
+        // 2 X.X.X
+        // 3 XO..X
+        // 4  XXX
+        let mut map = Map::new();
+        map.insert((0, 1), Section::Wall);
+        map.insert((0, 2), Section::Wall);
+        map.insert((0, 3), Section::Wall);
+
+        map.insert((1, 0), Section::Wall);
+        map.insert((1, 1), Section::Start);
+        map.insert((1, 2), Section::Path);
+        map.insert((1, 3), Section::Path);
+        map.insert((1, 4), Section::Wall);
+
+        map.insert((2, 0), Section::Wall);
+        map.insert((2, 1), Section::Path);
+        map.insert((2, 2), Section::Wall);
+        map.insert((2, 3), Section::Path);
+        map.insert((2, 4), Section::Wall);
+
+        map.insert((3, 0), Section::Wall);
+        map.insert((3, 1), Section::OxygenSystem);
+        map.insert((3, 2), Section::Path);
+        map.insert((3, 3), Section::Path);
+        map.insert((3, 4), Section::Wall);
+
+        map.insert((4, 1), Section::Wall);
+        map.insert((4, 2), Section::Wall);
+        map.insert((4, 3), Section::Wall);
+
+        let graph = convert_to_graph(&map);
+
+        assert_eq!(graph.node_count(), 8);
+        assert_eq!(graph.edge_count(), 8);
     }
 }
