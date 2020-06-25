@@ -90,6 +90,7 @@
 ///     69317163492948606335995924319873 becomes 52432133.
 ///
 /// After 100 phases of FFT, what are the first eight digits in the final output list?
+use std::iter;
 
 const INPUT: &str = include_str!("../input/day_16.txt");
 
@@ -101,7 +102,40 @@ pub fn run() {
 type Signal = Vec<i32>;
 
 fn execute_phase(signal: Signal) -> Signal {
-    signal.into_iter().collect()
+    let pattern = vec![0, 1, 0, -1];
+
+    signal
+        .iter()
+        .enumerate()
+        .map(|(index, _)| {
+            (signal
+                .iter()
+                .zip(generate_pattern(index, &pattern))
+                .map(|(list_element, pattern_value)| {
+                    list_element * pattern_value
+                })
+                .sum::<i32>()
+                % 10)
+                .abs()
+        })
+        .collect()
+}
+
+fn generate_pattern<'a>(
+    position: usize,
+    pattern: &'a Signal,
+) -> impl Iterator<Item = i32> + 'a {
+    // create the pattern values
+    let mut pattern_iterator = pattern
+        .iter()
+        .zip(iter::repeat(position + 1))
+        .flat_map(|(value, take)| {
+            iter::repeat(value.clone()).take(take.clone())
+        })
+        .cycle();
+    // skip the first value
+    pattern_iterator.next();
+    pattern_iterator
 }
 
 fn load_signal(input: &str) -> Signal {
@@ -123,6 +157,15 @@ mod tests {
     }
 
     #[test]
+    fn test_generate_pattern() {
+        let actual_pattern: Vec<i32> =
+            generate_pattern(1, &vec![0, 1, 0, -1]).take(8).collect();
+        let expected_pattern = vec![0, 1, 1, 0, 0, -1, -1, 0];
+
+        assert_eq!(actual_pattern, expected_pattern);
+    }
+
+    #[test]
     fn test_execute_phase_simple() {
         // starting signal
         let mut signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
@@ -133,7 +176,7 @@ mod tests {
 
         // after 2
         signal = execute_phase(signal);
-        assert_eq!(signal, vec![0, 3, 4, 1, 5, 5, 1, 8]);
+        assert_eq!(signal, vec![3, 4, 0, 4, 0, 4, 3, 8]);
 
         // after 3
         signal = execute_phase(signal);
