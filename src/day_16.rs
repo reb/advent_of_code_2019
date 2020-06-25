@@ -97,3 +97,50 @@ pub fn run() {
     println!("Not implemented yet");
     unimplemented!();
 }
+
+type Signal = Vec<u8>;
+
+fn execute_phase(signal: Signal) -> Signal {
+    signal.into_iter().collect()
+}
+
+fn load_signal(input: &str) -> Signal {
+    vec![]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_load_signal() {
+        let input = "12345678";
+
+        let expected_signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
+
+        let actual_signal = load_signal(input);
+        assert_eq!(actual_signal, expected_signal);
+    }
+
+    #[test]
+    fn test_execute_phase_simple() {
+        // starting signal
+        let mut signal = vec![1, 2, 3, 4, 5, 6, 7, 8];
+
+        // after 1
+        signal = execute_phase(signal);
+        assert_eq!(signal, vec![4, 8, 2, 2, 6, 1, 5, 8]);
+
+        // after 2
+        signal = execute_phase(signal);
+        assert_eq!(signal, vec![0, 3, 4, 1, 5, 5, 1, 8]);
+
+        // after 3
+        signal = execute_phase(signal);
+        assert_eq!(signal, vec![0, 3, 4, 1, 5, 5, 1, 8]);
+
+        // after 4
+        signal = execute_phase(signal);
+        assert_eq!(signal, vec![0, 1, 0, 2, 9, 4, 9, 8]);
+    }
+}
