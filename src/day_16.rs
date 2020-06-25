@@ -98,14 +98,14 @@ pub fn run() {
     unimplemented!();
 }
 
-type Signal = Vec<u8>;
+type Signal = Vec<i32>;
 
 fn execute_phase(signal: Signal) -> Signal {
     signal.into_iter().collect()
 }
 
 fn load_signal(input: &str) -> Signal {
-    vec![]
+    input.chars().filter_map(|c| c.to_digit(10).map(|i| i as i32)).collect()
 }
 
 #[cfg(test)]
