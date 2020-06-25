@@ -186,4 +186,49 @@ mod tests {
         signal = execute_phase(signal);
         assert_eq!(signal, vec![0, 1, 0, 2, 9, 4, 9, 8]);
     }
+
+    #[test]
+    fn test_execute_phase_100_times_1() {
+        // 80871224585914546619083218645595 becomes 24176176.
+        let mut signal = vec![
+            8, 0, 8, 7, 1, 2, 2, 4, 5, 8, 5, 9, 1, 4, 5, 4, 6, 6, 1, 9, 0, 8,
+            3, 2, 1, 8, 6, 4, 5, 5, 9, 5,
+        ];
+        for _ in 0..100 {
+            signal = execute_phase(signal);
+        }
+        let first_8: Signal = signal.into_iter().take(8).collect();
+        let expected_first_8 = vec![2, 4, 1, 7, 6, 1, 7, 6];
+        assert_eq!(first_8, expected_first_8);
+    }
+
+    #[test]
+    fn test_execute_phase_100_times_2() {
+        // 19617804207202209144916044189917 becomes 73745418.
+        let mut signal = vec![
+            1, 9, 6, 1, 7, 8, 0, 4, 2, 0, 7, 2, 0, 2, 2, 0, 9, 1, 4, 4, 9, 1,
+            6, 0, 4, 4, 1, 8, 9, 9, 1, 7,
+        ];
+        for _ in 0..100 {
+            signal = execute_phase(signal);
+        }
+        let first_8: Signal = signal.into_iter().take(8).collect();
+        let expected_first_8 = vec![7, 3, 7, 4, 5, 4, 1, 8];
+        assert_eq!(first_8, expected_first_8);
+    }
+
+    #[test]
+    fn test_execute_phase_100_times_3() {
+        // 69317163492948606335995924319873 becomes 52432133.
+        let mut signal = vec![
+            6, 9, 3, 1, 7, 1, 6, 3, 4, 9, 2, 9, 4, 8, 6, 0, 6, 3, 3, 5, 9, 9,
+            5, 9, 2, 4, 3, 1, 9, 8, 7, 3,
+        ];
+        for _ in 0..100 {
+            signal = execute_phase(signal);
+        }
+        let first_8: Signal = signal.into_iter().take(8).collect();
+        let expected_first_8 = vec![5, 2, 4, 3, 2, 1, 3, 3];
+        assert_eq!(first_8, expected_first_8);
+    }
 }
