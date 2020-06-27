@@ -95,8 +95,20 @@ use std::iter;
 const INPUT: &str = include_str!("../input/day_16.txt");
 
 pub fn run() {
-    println!("Not implemented yet");
-    unimplemented!();
+    let mut signal = load_signal(INPUT);
+
+    // run a 100 phases of FFT on the signal
+    for _ in 0..100 {
+        signal = execute_phase(signal);
+    }
+
+    // take the first eight digits
+    let first_8 =
+        signal.iter().take(8).map(|i| i.to_string()).collect::<String>();
+    println!(
+        "The first eight digits of the final output list are: {}",
+        first_8
+    );
 }
 
 type Signal = Vec<i32>;
