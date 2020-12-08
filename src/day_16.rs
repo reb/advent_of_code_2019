@@ -122,9 +122,10 @@ use std::iter;
 const INPUT: &str = include_str!("../input/day_16.txt");
 
 pub fn run() {
-    let mut signal = load_signal(INPUT);
+    let original_signal = load_signal(INPUT);
 
     // run a 100 phases of FFT on the signal
+    let mut signal = original_signal.clone();
     for _ in 0..100 {
         signal = execute_phase(signal);
     }
@@ -136,9 +137,50 @@ pub fn run() {
         "The first eight digits of the final output list are: {}",
         first_8
     );
+
+    // reset the signal
+    let mut extended_signal = original_signal
+        .iter()
+        .cycle()
+        .take(10_000 * signal.len())
+        .cloned()
+        .collect();
+
+    // take the offset
+    let offset = get_offset(&extended_signal);
+    // run a 100 phases of the FFT with the shortened algorithm
+    for _ in 0..100 {
+        extended_signal = execute_phase_only_from(extended_signal, offset);
+    }
+    let offsetted_8 = extended_signal
+        .iter()
+        .skip(offset)
+        .take(8)
+        .map(|i| i.to_string())
+        .collect::<String>();
+    println!(
+        "With the real signal the offsetted eight digits of the final output list are: {}",
+        offsetted_8
+    );
 }
 
 type Signal = Vec<i32>;
+
+fn get_offset(signal: &Signal) -> usize {
+    signal.iter().take(7).fold(0, |acc, n| (acc * 10) + n) as usize
+}
+
+fn execute_phase_only_from(mut signal: Signal, start: usize) -> Signal {
+    // this only works if the signal is in the second half of the signal
+    assert!(start > (signal.len() / 2));
+
+    let mut sum = 0;
+    for i in (start..signal.len()).rev() {
+        sum += signal[i];
+        signal[i] = sum % 10;
+    }
+    signal
+}
 
 fn execute_phase(signal: Signal) -> Signal {
     let pattern = vec![0, 1, 0, -1];
@@ -269,5 +311,74 @@ mod tests {
         let first_8: Signal = signal.into_iter().take(8).collect();
         let expected_first_8 = vec![5, 2, 4, 3, 2, 1, 3, 3];
         assert_eq!(first_8, expected_first_8);
+    }
+
+    #[test]
+    fn test_execute_phase_only_from_100_times_1() {
+        // 03036732577212944063491565474664 becomes 84462026.
+        let mut signal = vec![
+            0, 3, 0, 3, 6, 7, 3, 2, 5, 7, 7, 2, 1, 2, 9, 4, 4, 0, 6, 3, 4, 9,
+            1, 5, 6, 5, 4, 7, 4, 6, 6, 4,
+        ];
+        let offset = get_offset(&signal);
+        signal = signal
+            .iter()
+            .cycle()
+            .take(10_000 * signal.len())
+            .cloned()
+            .collect();
+        for _ in 0..100 {
+            signal = execute_phase_only_from(signal, offset);
+        }
+        let offsetted_8: Signal =
+            signal.into_iter().skip(offset).take(8).collect();
+        let expected_offsetted_8 = vec![8, 4, 4, 6, 2, 0, 2, 6];
+        assert_eq!(offsetted_8, expected_offsetted_8);
+    }
+
+    #[test]
+    fn test_execute_phase_only_from_100_times_2() {
+        // 02935109699940807407585447034323 becomes 78725270.
+        let mut signal = vec![
+            0, 2, 9, 3, 5, 1, 0, 9, 6, 9, 9, 9, 4, 0, 8, 0, 7, 4, 0, 7, 5, 8,
+            5, 4, 4, 7, 0, 3, 4, 3, 2, 3,
+        ];
+        let offset = get_offset(&signal);
+        signal = signal
+            .iter()
+            .cycle()
+            .take(10_000 * signal.len())
+            .cloned()
+            .collect();
+        for _ in 0..100 {
+            signal = execute_phase_only_from(signal, offset);
+        }
+        let offsetted_8: Signal =
+            signal.into_iter().skip(offset).take(8).collect();
+        let expected_offsetted_8 = vec![7, 8, 7, 2, 5, 2, 7, 0];
+        assert_eq!(offsetted_8, expected_offsetted_8);
+    }
+
+    #[test]
+    fn test_execute_phase_only_from_100_times_3() {
+        // 03081770884921959731165446850517 becomes 53553731.
+        let mut signal = vec![
+            0, 3, 0, 8, 1, 7, 7, 0, 8, 8, 4, 9, 2, 1, 9, 5, 9, 7, 3, 1, 1, 6,
+            5, 4, 4, 6, 8, 5, 0, 5, 1, 7,
+        ];
+        let offset = get_offset(&signal);
+        signal = signal
+            .iter()
+            .cycle()
+            .take(10_000 * signal.len())
+            .cloned()
+            .collect();
+        for _ in 0..100 {
+            signal = execute_phase_only_from(signal, offset);
+        }
+        let offsetted_8: Signal =
+            signal.into_iter().skip(offset).take(8).collect();
+        let expected_offsetted_8 = vec![5, 3, 5, 5, 3, 7, 3, 1];
+        assert_eq!(offsetted_8, expected_offsetted_8);
     }
 }
